@@ -70,6 +70,7 @@ function onMouseDown(event) {
     path = new Path();
     path.fillColor = active_color_rgb;
     path.add(event.point);
+    view.draw();
 
     // The data we will send every 100ms on mouse drag
     path_to_send = {
@@ -92,6 +93,7 @@ function onMouseDrag(event) {
     path.add(top);
     path.insert(0, bottom);
     path.smooth();
+    view.draw();
 
     // Add data to path
     path_to_send.path.push({
@@ -122,6 +124,7 @@ function onMouseUp(event) {
     path.add(event.point);
     path.closed = true;
     path.smooth();
+    view.draw();
 
     // Send the path to other users
     path_to_send.end = event.point;
@@ -237,6 +240,7 @@ var end_external_path = function( points, artist ) {
         path.add(points.end);
         path.closed = true;
         path.smooth();
+        view.draw();
 
         // Remove the old data
         external_paths[artist] = false;
@@ -278,6 +282,7 @@ progress_external_path = function( points, artist ) {
     }
 
     path.smooth();
+    view.draw();
 
 };
 

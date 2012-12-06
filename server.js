@@ -2,17 +2,9 @@
  * Module dependencies.
  */
 
-/*
-var express = require('express'),
-  app = express(),
-  http = require('http'),
-  server = http.createServer(app),
-  socket = require('socket.io'),
-  io = socket.listen(server);
-*/
+var express = require("express");
+var app = express();
 
-var express = require('express');
-var app = express.createServer();
 var socket = require('socket.io');
 app.configure(function(){
   app.use(express.static(__dirname + '/'));
@@ -32,18 +24,6 @@ var port = 3000;
  *
  */
 
-var pub = __dirname + '/public';
-app.use(app.router);
-app.use(express.static(pub));
-// app.use(express.errorHandler());
-app.set('views', __dirname + '/views');
-app.set('view engine', 'jade');
-app.set('view options', {layout: false});
-
-app.configure(function(){
-  app.use(express.static(__dirname + '/'));
-});
-
 // SESSIONS
 app.use(express.cookieParser());
 app.use(express.session({secret: 'secret', key: 'express.sid'}));
@@ -59,11 +39,18 @@ app.configure('production', function(){
 });
 
 // ROUTES
+// Index page
 app.get('/', function(req, res){
-  res.render('index', {
-    title: 'title'
-  });
+  res.sendfile(__dirname + '/src/static/html/index.html');
 });
+
+// Drawings
+app.get('/d/*', function(req, res){
+  res.sendfile(__dirname + '/src/static/html/draw.html');
+});
+
+// Static files IE Javascript and CSS
+app.use("/static", express.static(__dirname + '/src/static'));
 
 // LISTEN FOR REQUESTS
 var server = app.listen(port);

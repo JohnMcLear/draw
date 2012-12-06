@@ -10,7 +10,6 @@
   },
   "dependencies": {
     "express": "*",
-    "socket.io": "*",
-    "jade": "*"
+    "socket.io": "*"
   }
 }

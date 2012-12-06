@@ -24,18 +24,6 @@ var port = 3000;
  *
  */
 
-var pub = __dirname + '/public';
-app.use(app.router);
-app.use(express.static(pub));
-// app.use(express.errorHandler());
-app.set('views', __dirname + '/views');
-app.set('view engine', 'jade');
-app.set('view options', {layout: false});
-
-app.configure(function(){
-  app.use(express.static(__dirname + '/'));
-});
-
 // SESSIONS
 app.use(express.cookieParser());
 app.use(express.session({secret: 'secret', key: 'express.sid'}));
@@ -51,11 +39,11 @@ app.configure('production', function(){
 });
 
 // ROUTES
-app.get('/', function(req, res){
-  res.render('index', {
-    title: 'title'
-  });
+app.get('/d/*', function(req, res){
+  res.sendfile(__dirname + '/src/static/html/draw.html');
 });
+
+app.use("/static", express.static(__dirname + '/src/static'));
 
 // LISTEN FOR REQUESTS
 var server = app.listen(port);

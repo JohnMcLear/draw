@@ -14,7 +14,10 @@ var uid = (function () {
   return (S4() + S4() + "-" + S4() + "-" + S4() + "-" + S4() + "-" + S4() + S4() + S4());
 }());
 
-
+// Join the room
+var room = window.location.pathname.split("/")[2];
+console.log(room);
+socket.emit('subscribe', { room: room });
 
 // JSON data ofthe users current drawing
 // Is sent to the user
@@ -106,7 +109,7 @@ function onMouseDrag(event) {
 
     send_paths_timer = setInterval(function () {
 
-      socket.emit('draw:progress', uid, JSON.stringify(path_to_send));
+      socket.emit('draw:progress', room, uid, JSON.stringify(path_to_send));
       path_to_send.path = new Array();
 
     }, 100);
@@ -128,7 +131,7 @@ function onMouseUp(event) {
 
   // Send the path to other users
   path_to_send.end = event.point;
-  socket.emit('draw:end', uid, JSON.stringify(path_to_send));
+  socket.emit('draw:end', room, uid, JSON.stringify(path_to_send));
 
   // Stop new path data being added & sent
   clearInterval(send_paths_timer);

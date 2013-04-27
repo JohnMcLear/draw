@@ -76,7 +76,7 @@ io.sockets.on('connection', function (socket) {
   });
   
   // User joins a room
-  socket.on('subscribe', function(data){
+  socket.on('subscribe', function(data) {
     subscribe(socket, data);
   });
   
@@ -112,7 +112,7 @@ function disconnect(socket) {
 }
 
 // Unsubscribe a client from a room
-function unsubscribe(socket, data){
+function unsubscribe(socket, data) {
   var room = data.room;
   
   // Remove the client from socket.io room
@@ -121,7 +121,7 @@ function unsubscribe(socket, data){
   socket.leave(room);
 	
   // Broadcast to room the new user count
-  if ( io.sockets.manager.rooms['/' + room] ) {
+  if (io.sockets.manager.rooms['/' + room]) {
     var active_connections = io.sockets.manager.rooms['/' + room].length;  
     io.sockets.in(room).emit('user:disconnect', active_connections);
   }

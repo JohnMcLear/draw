@@ -16,7 +16,6 @@ var uid = (function () {
 
 // Join the room
 var room = window.location.pathname.split("/")[2];
-console.log(room);
 socket.emit('subscribe', { room: room });
 
 // JSON data ofthe users current drawing
@@ -81,7 +80,6 @@ function onMouseDown(event) {
     start: event.point,
     path: []
   };
-
 
 }
 
@@ -186,9 +184,7 @@ socket.on('draw:progress', function (artist, data) {
 
   // It wasnt this user who created the event
   if (artist !== uid && data) {
-
     progress_external_path(JSON.parse(data), artist);
-
   }
 
 });
@@ -241,11 +237,11 @@ var end_external_path = function (points, artist) {
   if (path) {
 
     // Close the path
-    path.add(points.end);
+    path.add(new Point(points.end[1], points.end[2]));
     path.closed = true;
     path.smooth();
     view.draw();
-
+	
     // Remove the old data
     external_paths[artist] = false;
 
@@ -255,7 +251,6 @@ var end_external_path = function (points, artist) {
 
 // Continues to draw a path in real time
 progress_external_path = function (points, artist) {
-
 
   var path = external_paths[artist];
 
@@ -268,7 +263,7 @@ progress_external_path = function (points, artist) {
     path = external_paths[artist];
 
     // Starts the path
-    var start_point = new Point(points.start.x, points.start.y);
+    var start_point = new Point(points.start[1], points.start[2]);
     var color = new RgbColor(points.rgba.red, points.rgba.green, points.rgba.blue, points.rgba.opacity);
     path.fillColor = color;
     path.add(start_point);
@@ -280,8 +275,8 @@ progress_external_path = function (points, artist) {
   var length = paths.length;
   for (var i = 0; i < length; i++) {
 
-    path.add(paths[i].top);
-    path.insert(0, paths[i].bottom);
+    path.add(new Point(paths[i].top[1], paths[i].top[2]));
+    path.insert(0, new Point(paths[i].bottom[1], paths[i].bottom[2]));
 
   }
 

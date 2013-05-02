@@ -206,7 +206,9 @@ socket.on('user:disconnect', function (user_count) {
   update_user_count(user_count);
 });
 
-
+socket.on('project:load', function (json) {
+  paper.project.importJSON(json.project);
+});
 
 
 

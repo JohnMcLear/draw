@@ -1,0 +1,10 @@
+projectDirectory = "$CWD"
+windowTitle = "$TM_DISPLAYNAME — Paper.js"
+excludeDirectories = "{$excludeDirectories,dist,build/jsdoc-toolkit}"
+
+# JavaScript coding conventions
+showInvisibles = true
+softTabs = false
+tabSize = 4
+softWrap = false
+wrapColumn = 80

@@ -94,6 +94,12 @@ io.sockets.on('connection', function (socket) {
     subscribe(socket, data);
   });
   
+  // User clears canvas
+  socket.on('canvas:clear', function(room) {
+    clearCanvas(room);
+    io.sockets.in(room).emit('canvas:clear');
+  });
+  
 });
 
 var projects = {};
@@ -200,13 +206,7 @@ var end_external_path = function (room, points, artist) {
 
   }
 
-  var json = project.exportJSON();
-  db.init(function (err) {
-    if(err) {
-      console.error(err);
-    }
-    db.set(room, {project: json});
-  });
+  writeProjectToDB(room);
 };
 
 // Continues to draw a path in real time
@@ -246,3 +246,35 @@ progress_external_path = function (room, points, artist) {
 
 };
 
+function writeProjectToDB(room) {
+  var project = projects[room].project;
+  var json = project.exportJSON();
+  db.init(function (err) {
+    if(err) {
+      console.error(err);
+    }
+    db.set(room, {project: json});
+  });
+}
+
+function clearCanvas(room) {
+  var project = projects[room].project;
+  
+  if (project && project.activeLayer && project.activeLayer.hasChildren()) {
+    // Remove all but the active layer
+    if (project.layers.length > 1) {
+      var activeLayerID = project.activeLayer._id;
+      for (var i=0; i<project.layers.length; i++) {
+        if (project.layers[i]._id != activeLayerID) {
+          project.layers[i].remove();
+          i--;
+        }
+      }
+    }
+    // Remove all of the children from the active layer
+    if (paper.project.activeLayer && paper.project.activeLayer.hasChildren()) {
+      paper.project.activeLayer.removeChildren();
+    }
+    writeProjectToDB(room);
+  }
+}

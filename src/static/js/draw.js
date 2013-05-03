@@ -166,8 +166,29 @@ $opacity.on('change', function () {
 
 });
 
+$('#clearCanvas').on('click', function() {
+  clearCanvas();
+  socket.emit('canvas:clear', room);
+});
 
-
+function clearCanvas() {
+  // Remove all but the active layer
+  if (project.layers.length > 1) {
+    var activeLayerID = project.activeLayer._id;
+    for (var i=0; i<project.layers.length; i++) {
+      if (project.layers[i]._id != activeLayerID) {
+        project.layers[i].remove();
+        i--;
+      }
+    }
+  }
+  
+  // Remove all of the children from the active layer
+  if (paper.project.activeLayer && paper.project.activeLayer.hasChildren()) {
+    paper.project.activeLayer.removeChildren();
+  }
+  view.draw();
+}
 
 
 
@@ -215,6 +236,9 @@ socket.on('project:load:error', function() {
   $('#lostConnection').show();
 });
 
+socket.on('canvas:clear', function() {
+  clearCanvas();
+});
 
 
 // --------------------------------- 

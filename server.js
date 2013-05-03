@@ -70,6 +70,10 @@ io.sockets.on('connection', function (socket) {
   // EVENT: User stops drawing something
   // Having room as a parameter is not good for secure rooms
   socket.on('draw:progress', function (room, uid, co_ordinates) {
+    if (!projects[room] || !projects[room].project) {
+      loadError();
+      return;
+    }
     io.sockets.in(room).emit('draw:progress', uid, co_ordinates);
     progress_external_path(room, JSON.parse(co_ordinates), uid);
   });
@@ -77,6 +81,10 @@ io.sockets.on('connection', function (socket) {
   // EVENT: User stops drawing something
   // Having room as a parameter is not good for secure rooms
   socket.on('draw:end', function (room, uid, co_ordinates) {
+    if (!projects[room] || !projects[room].project) {
+      loadError();
+      return;
+    }
     io.sockets.in(room).emit('draw:end', uid, co_ordinates);
     end_external_path(room, JSON.parse(co_ordinates), uid);
   });
@@ -97,7 +105,6 @@ function subscribe(socket, data) {
   socket.join(room);
 
   // Create Paperjs instance for this room if it doesn't exist
-
   var project = projects[room];
   if (!project) {
     projects[room] = {};
@@ -115,18 +122,22 @@ function subscribe(socket, data) {
 // Try to load room from database
 function loadFromDB(room, socket) {
 
-  db.init(function (err) {
-    if(err) {
-      console.error(err);
-    }
-    db.get(room, function(err, value) {
-	  if (value) {
-        projects[room].project.importJSON(value.project);
-        socket.emit('project:load', value);
+  if (projects[room] && projects[room].project) {
+    db.init(function (err) {
+      if(err) {
+        console.error(err);
       }
-      db.close(function(){});
+      db.get(room, function(err, value) {
+	    if (value) {
+          projects[room].project.importJSON(value.project);
+          socket.emit('project:load', value);
+        }
+        db.close(function(){});
+      });
     });
-  })
+  } else {
+    loadError(socket);
+  }
 }
 
 // When a client disconnects, unsubscribe him from
@@ -163,6 +174,10 @@ function unsubscribe(socket, data) {
     projects[room] = false;
   }
   
+}
+
+function loadError(socket) {
+  socket.emit('project:load:error');
 }
 
 // Ends a path

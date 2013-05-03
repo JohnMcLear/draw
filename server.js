@@ -71,7 +71,7 @@ io.sockets.on('connection', function (socket) {
   // Having room as a parameter is not good for secure rooms
   socket.on('draw:progress', function (room, uid, co_ordinates) {
     if (!projects[room] || !projects[room].project) {
-      loadError();
+      loadError(socket);
       return;
     }
     io.sockets.in(room).emit('draw:progress', uid, co_ordinates);
@@ -82,7 +82,7 @@ io.sockets.on('connection', function (socket) {
   // Having room as a parameter is not good for secure rooms
   socket.on('draw:end', function (room, uid, co_ordinates) {
     if (!projects[room] || !projects[room].project) {
-      loadError();
+      loadError(socket);
       return;
     }
     io.sockets.in(room).emit('draw:end', uid, co_ordinates);
@@ -96,6 +96,10 @@ io.sockets.on('connection', function (socket) {
   
   // User clears canvas
   socket.on('canvas:clear', function(room) {
+    if (!projects[room] || !projects[room].project) {
+      loadError(socket);
+      return;
+    }
     clearCanvas(room);
     io.sockets.in(room).emit('canvas:clear');
   });

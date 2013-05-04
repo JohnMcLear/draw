@@ -175,6 +175,10 @@ $('#exportSVG').on('click', function() {
   exportSVG();
 });
 
+$('#exportPNG').on('click', function() {
+  exportPNG();
+});
+
 function clearCanvas() {
   // Remove all but the active layer
   if (project.layers.length > 1) {
@@ -215,6 +219,11 @@ function encodeAsImgAndLink(svg){
   var b64 = Base64.encode(dummy.innerHTML);
 
   window.open("data:image/svg+xml;base64,\n"+b64);
+}
+
+function exportPNG() {
+  var canvas = document.getElementById('myCanvas');
+  window.open(canvas.toDataURL('image/png'));
 }
 
 

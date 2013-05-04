@@ -14,6 +14,20 @@ var uid = (function () {
   return (S4() + S4() + "-" + S4() + "-" + S4() + "-" + S4() + "-" + S4() + S4() + S4());
 }());
 
+function getParameterByName(name)
+{ 
+  name = name.replace(/[\[]/, "\\\[").replace(/[\]]/, "\\\]");
+  var regexS = "[\\?&]" + name + "=([^&#]*)";
+  var regex = new RegExp(regexS);
+  var results = regex.exec(window.location.search);
+  if(results == null) {
+    return "";
+  }
+  else {
+    return decodeURIComponent(results[1].replace(/\+/g, " "));
+  }
+}
+
 // Join the room
 var room = window.location.pathname.split("/")[2];
 socket.emit('subscribe', { room: room });
@@ -26,12 +40,20 @@ var path_to_send = {};
 var active_color_rgb;
 var active_color_json = {};
 var $opacity = $('#opacity');
-var update_active_color = function () {
-
+var update_active_color = function (r, g, b) {
   var rgb_array = $('.active').attr('data-color').split(',');
   var red = rgb_array[0] / 255;
+  if (r) {
+    red = r / 255;
+  }
   var green = rgb_array[1] / 255;
+  if (g) {
+    green = g / 255;
+  }
   var blue = rgb_array[2] / 255;
+  if (b) {
+    blue = b / 255;
+  }
   var opacity = $opacity.val() / 255;
 
   active_color_rgb = new RgbColor(red, green, blue, opacity);
@@ -46,12 +68,20 @@ var update_active_color = function () {
 
 };
 
-
-
-
 // Get the active color from the UI eleements
-update_active_color();
-
+var authorColor = getParameterByName('authorColor');
+var authorColors = {};
+if (authorColor != "" && authorColor.substr(0,4) == "rgb(") {
+  authorColor = authorColor.substr(4, authorColor.indexOf(")")-4);
+  authorColors = authorColor.split(",");
+  if (authorColors.length == 3) {
+    update_active_color(authorColors[0], authorColors[1], authorColors[2]);
+  } else {
+    update_active_color();
+  }
+} else {
+  update_active_color();
+}
 
 
 

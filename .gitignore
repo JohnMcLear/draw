@@ -1,3 +1,4 @@
-node_modules/*
+node_modules/canvas
+node_modules/ueberDB
 settings.json
 *~

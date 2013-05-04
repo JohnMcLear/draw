@@ -8,6 +8,8 @@ Requirements
 
  * [Socket IO](http://socket.io/)
  * [Express](http://expressjs.com/)
+ * [Canvas] (https://github.com/LearnBoost/node-canvas) - Please see https://github.com/LearnBoost/node-canvas/wiki for installation
+ * [Paper] (http://paperjs.org/) - Currently included
 
 Demo
 ----

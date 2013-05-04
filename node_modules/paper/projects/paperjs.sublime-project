@@ -1,0 +1,56 @@
+{
+	"folders":
+	[
+		{
+			"path": "../src"
+		},
+		{
+			"path": "../test"
+		},
+		{
+			"path": "../examples"
+		},
+		{
+			"path": "../lib"
+		},
+		{
+			"path": "../build",
+            // jsdoc-toolkit will have its own project file
+			"folder_exclude_patterns": ["jsdoc-toolkit"]
+		},
+		{
+			"path": "../node.js"
+		},
+		{
+			"path": "..",
+			"name": "root",
+            "folder_exclude_patterns": ["*"]
+		}
+	],
+    "settings":
+    {
+        "tab_size": 4,
+        "translate_tabs_to_spaces": false,
+        // Note, these do not currently work on project settings, but are the
+        // settings used to develop paper.js
+        "javascript_linter": "jshint",
+        "jshint_options":
+        {
+            "evil": true,
+            "regexdash": true,
+            "browser": true,
+            "wsh": true,
+            "trailing": false,
+            "smarttabs": true,
+            "sub": true,
+            "supernew": true,
+            "laxbreak": true,
+            "eqeqeq": false,
+            "eqnull": true,
+            "loopfunc": true,
+            "boss": true,
+            "loopfunc": true,
+            "shadow": true
+        }
+    }
+}

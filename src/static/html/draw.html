@@ -6,9 +6,13 @@
         <script src='/socket.io/socket.io.js'></script>
         <script src='/static/js/lib/zepto.js'></script>
         <script src='/static/js/lib/paper.js'></script>
+        <script src='/static/js/lib/webtoolkit.base64.js'></script>
         <script src='/static/js/draw.js' type="text/paperscript" canvas="myCanvas"></script>
     </head>
     <body>
+    <div id="lostConnection" hidden="true">
+	    <p>Lost connection to the server! Please refresh this page.</p>
+    </div>
     <div id="controls">
         <div id="userCountWrapper" style="opacity:0"> artists:
             <span id="userCount"></span>
@@ -25,6 +29,9 @@
         <label>Opacity
            <input type="range" min="0" max="255" value="200" id="opacity">
         </label>
+        <button id="clearCanvas">Clear</button>
+        <button id="exportSVG">Export SVG</button>
+        <button id="exportPNG">Export PNG</button>
     </div>
     <canvas id="myCanvas" resize="true"></canvas>
     </body>

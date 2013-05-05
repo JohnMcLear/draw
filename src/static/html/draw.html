@@ -4,16 +4,20 @@
         <title>EtherDraw</title>
         <link rel='stylesheet' href='/static/css/style.css'>
         <script src='/socket.io/socket.io.js'></script>
-        <script src='/static/js/lib/zepto.js'></script>
+        <!--<script src='/static/js/lib/zepto.js'></script>-->
+        <script>
+            document.write('<script src=/static/js/lib/' +
+            ('__proto__' in {} ? 'zepto' : 'jquery') + '.js><\/script>')
+        </script>
         <script src='/static/js/lib/paper.js'></script>
         <script src='/static/js/lib/webtoolkit.base64.js'></script>
         <script src='/static/js/draw.js' type="text/paperscript" canvas="myCanvas"></script>
     </head>
     <body>
-    <div id="lostConnection" hidden="true">
+    <div id="lostConnection" class="hidden">
 	    <p>Lost connection to the server! Please refresh this page.</p>
     </div>
-    <div id="loading" hidden="true">
+    <div id="loading" class="hidden">
         <p>Loading existing sketch...</p>
     </div>
     <div id="controls">

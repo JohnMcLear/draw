@@ -31,3 +31,7 @@ margin:0;
 .color.active {
 opacity:1;
 }
+
+.hidden {
+display:none;
+}

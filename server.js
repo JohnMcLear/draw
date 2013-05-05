@@ -139,8 +139,10 @@ function loadFromDB(room, socket) {
       }
       db.get(room, function(err, value) {
 	    if (value && projects[room].project && projects[room].project instanceof paper.Project) {
+          socket.emit('loading:start');
           projects[room].project.importJSON(value.project);
           socket.emit('project:load', value);
+          socket.emit('loading:end');
         }
         db.close(function(){});
       });

@@ -304,6 +304,14 @@ socket.on('canvas:clear', function() {
   clearCanvas();
 });
 
+socket.on('loading:start', function() {
+  $('#loading').show();
+});
+
+socket.on('loading:end', function() {
+  $('#loading').hide();
+});
+
 
 // --------------------------------- 
 // SOCKET.IO EVENT FUNCTIONS

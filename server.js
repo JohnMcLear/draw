@@ -142,8 +142,8 @@ function loadFromDB(room, socket) {
           socket.emit('loading:start');
           projects[room].project.importJSON(value.project);
           socket.emit('project:load', value);
-          socket.emit('loading:end');
         }
+        socket.emit('loading:end');
         db.close(function(){});
       });
     });

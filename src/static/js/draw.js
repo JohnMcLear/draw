@@ -1,6 +1,29 @@
 tool.minDistance = 10;
 tool.maxDistance = 45;
 
+function pickColor(color) {
+  $('#color').val(color);
+  var rgb = hexToRgb(color);
+  $('#activeColorSwatch').css('background-color', 'rgb(' + rgb.r + ',' + rgb.g + ',' + rgb.b + ')');
+  update_active_color();
+}
+
+/*http://stackoverflow.com/questions/5623838/rgb-to-hex-and-hex-to-rgb*/
+function hexToRgb(hex) {
+  var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return result ? {
+    r: parseInt(result[1], 16),
+    g: parseInt(result[2], 16),
+    b: parseInt(result[3], 16)
+  } : null;
+}
+
+
+$(document).ready(function() {
+  $('#colorpicker').farbtastic(pickColor);
+});
+
+$('#activeColorSwatch').css('background-color', $('.colorSwatch.active').css('background-color'));
 
 // Initialise Socket.io
 var socket = io.connect('/');
@@ -40,20 +63,16 @@ var path_to_send = {};
 var active_color_rgb;
 var active_color_json = {};
 var $opacity = $('#opacity');
-var update_active_color = function (r, g, b) {
-  var rgb_array = $('.active').attr('data-color').split(',');
+var update_active_color = function () {
+  var rgb_array = $('#activeColorSwatch').css('background-color');
+  while(rgb_array.indexOf(" ") > -1) {
+    rgb_array = rgb_array.replace(" ", "");
+  }
+  rgb_array = rgb_array.substr(4, rgb_array.length-5);
+  rgb_array = rgb_array.split(',');
   var red = rgb_array[0] / 255;
-  if (r) {
-    red = r / 255;
-  }
   var green = rgb_array[1] / 255;
-  if (g) {
-    green = g / 255;
-  }
   var blue = rgb_array[2] / 255;
-  if (b) {
-    blue = b / 255;
-  }
   var opacity = $opacity.val() / 255;
 
   active_color_rgb = new RgbColor(red, green, blue, opacity);
@@ -74,15 +93,9 @@ var authorColors = {};
 if (authorColor != "" && authorColor.substr(0,4) == "rgb(") {
   authorColor = authorColor.substr(4, authorColor.indexOf(")")-4);
   authorColors = authorColor.split(",");
-  if (authorColors.length == 3) {
-    update_active_color(authorColors[0], authorColors[1], authorColors[2]);
-  } else {
-    update_active_color();
-  }
-} else {
-  update_active_color();
+  $('#activeColorSwatch').css('background-color', 'rgb(' + authorColors[0] + ',' + authorColors[1] + ',' + authorColors[2] + ')');
 }
-
+update_active_color();
 
 
 
@@ -180,14 +193,18 @@ function onMouseUp(event) {
 // --------------------------------- 
 // CONTROLS EVENTS
 
-var $color = $('.color');
+var $color = $('.colorSwatch:not(#pickerSwatch)');
 $color.on('click', function () {
 
   $color.removeClass('active');
   $(this).addClass('active');
-
+  $('#activeColorSwatch').css('background-color', $(this).css('background-color'));
   update_active_color();
 
+});
+
+$('#pickerSwatch').on('click', function() {
+  $('#myColorPicker').fadeToggle();
 });
 
 $opacity.on('change', function () {

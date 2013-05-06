@@ -3,14 +3,12 @@
     <head>
         <title>EtherDraw</title>
         <link rel='stylesheet' href='/static/css/style.css'>
+        <link rel='stylesheet' href='/static/css/farbtastic.css'>
         <script src='/socket.io/socket.io.js'></script>
-        <!--<script src='/static/js/lib/zepto.js'></script>-->
-        <script>
-            document.write('<script src=/static/js/lib/' +
-            ('__proto__' in {} ? 'zepto' : 'jquery') + '.js><\/script>')
-        </script>
+        <script src='/static/js/lib/jquery.js'></script>
         <script src='/static/js/lib/paper.js'></script>
         <script src='/static/js/lib/webtoolkit.base64.js'></script>
+        <script src='/static/js/lib/farbtastic.js'></script>
         <script src='/static/js/draw.js' type="text/paperscript" canvas="myCanvas"></script>
     </head>
     <body>
@@ -24,21 +22,27 @@
         <div id="userCountWrapper" style="opacity:0"> artists:
             <span id="userCount"></span>
         </div>
-        <div data-color="47,47,47" class="color" style="background:rgb(37,37,37);"></div>
-        <div data-color="109,73,37" class="color active" style="background:rgb(109,73,37);"></div>
-        <div data-color="233,34,41" class="color" style="background:rgb(233,34,41);"></div>
-        <div data-color="57,178,73" class="color" style="background:rgb(57,178,73);"></div>
-        <div data-color="247,219,31" class="color" style="background:rgb(247,219,31);"></div>
-        <div data-color="248,172,60" class="color" style="background:rgb(248,172,60);"></div>
-        <div data-color="142,42,140" class="color" style="background:rgb(142,42,140);"></div>
-        <div data-color="77,42,255" class="color" style="background:rgb(77,42,255);"></div>
-        <div data-color="255,255,255" class="color" style="background:rgb(255,255,255);"></div>
+        <div id="activeColorSwatch"></div>
+        <div data-color="47,47,47" class="colorSwatch" style="background:rgb(37,37,37);"></div>
+        <div data-color="109,73,37" class="colorSwatch active" style="background:rgb(109,73,37);"></div>
+        <div data-color="233,34,41" class="colorSwatch" style="background:rgb(233,34,41);"></div>
+        <div data-color="57,178,73" class="colorSwatch" style="background:rgb(57,178,73);"></div>
+        <div data-color="247,219,31" class="colorSwatch" style="background:rgb(247,219,31);"></div>
+        <div data-color="248,172,60" class="colorSwatch" style="background:rgb(248,172,60);"></div>
+        <div data-color="142,42,140" class="colorSwatch" style="background:rgb(142,42,140);"></div>
+        <div data-color="77,42,255" class="colorSwatch" style="background:rgb(77,42,255);"></div>
+        <div data-color="255,255,255" class="colorSwatch" style="background:rgb(255,255,255);"></div>
+        <div id="pickerSwatch" class="colorSwatch"></div>
         <label>Opacity
-           <input type="range" min="0" max="255" value="200" id="opacity">
+            <input type="range" min="0" max="255" value="200" id="opacity">
         </label>
         <button id="clearCanvas">Clear</button>
         <button id="exportSVG">Export SVG</button>
         <button id="exportPNG">Export PNG</button>
+        <div id="myColorPicker">
+            <form><input type="text" id="color" name="color" value="#123456" /></form>
+            <div id="colorpicker"></div>
+        </div>
     </div>
     <canvas id="myCanvas" resize="true"></canvas>
     </body>

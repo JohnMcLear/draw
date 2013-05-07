@@ -104,6 +104,10 @@ io.sockets.on('connection', function (socket) {
     io.sockets.in(room).emit('canvas:clear');
   });
   
+  socket.on('item:remove', function(room, artist, itemName) {
+    removeItem(room, artist, itemName);
+  });
+  
 });
 
 var projects = {};
@@ -140,6 +144,9 @@ function loadFromDB(room, socket) {
       db.get(room, function(err, value) {
 	    if (value && projects[room].project && projects[room].project instanceof paper.Project) {
           socket.emit('loading:start');
+          // Clear default layer as importing JSON adds a new layer.
+          // We want the project to always only have one layer.
+          projects[room].project.activeLayer.remove();
           projects[room].project.importJSON(value.project);
           socket.emit('project:load', value);
         }
@@ -233,6 +240,7 @@ progress_external_path = function (room, points, artist) {
     var start_point = new paper.Point(points.start[1], points.start[2]);
     var color = new paper.Color(points.rgba.red, points.rgba.green, points.rgba.blue, points.rgba.opacity);
     path.fillColor = color;
+    path.name = points.name;
     path.add(start_point);
 
   }
@@ -281,6 +289,15 @@ function clearCanvas(room) {
     if (paper.project.activeLayer && paper.project.activeLayer.hasChildren()) {
       paper.project.activeLayer.removeChildren();
     }
+    writeProjectToDB(room);
+  }
+}
+
+function removeItem(room, artist, itemName) {
+  var project = projects[room].project;
+  if (project && project.activeLayer && project.activeLayer._namedChildren[itemName] && project.activeLayer._namedChildren[itemName][0]) {
+    project.activeLayer._namedChildren[itemName][0].remove();
+    io.sockets.in(room).emit('item:remove', artist, itemName);
     writeProjectToDB(room);
   }
 }

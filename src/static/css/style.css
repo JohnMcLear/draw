@@ -55,10 +55,14 @@ display:none;
 opacity:1;
 }
 
-#myColorPicker{
+#myColorPicker {
 display:none;
 position:absolute;
 top:0px;
 right:100px;
 z-index:100
+}
+
+#myCanvas {
+cursor:pointer;
 }

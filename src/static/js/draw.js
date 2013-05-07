@@ -107,81 +107,112 @@ update_active_color();
 
 var send_paths_timer;
 var timer_is_active = false;
+var paper_object_count = 0;
+var activeTool = "draw";
 
 function onMouseDown(event) {
 
-  var point = event.point;
+  if (activeTool == "draw") {
+    var point = event.point;
 
-  path = new Path();
-  path.fillColor = active_color_rgb;
-  path.add(event.point);
-  view.draw();
+    path = new Path();
+    path.fillColor = active_color_rgb;
+    path.add(event.point);
+    path.name = uid + ":" + (++paper_object_count);
+    view.draw();
 
-  // The data we will send every 100ms on mouse drag
-  path_to_send = {
-    rgba: active_color_json,
-    start: event.point,
-    path: []
-  };
-
+    // The data we will send every 100ms on mouse drag
+    path_to_send = {
+      name: path.name,
+      rgba: active_color_json,
+      start: event.point,
+      path: []
+    };
+  } else if (activeTool == "select") {
+    // Select item
+    if (event.item) {
+      // If holding shift key down, don't clear selection - allows multiple selections
+      if (!event.event.shiftKey) {
+        paper.project.activeLayer.selected = false;
+      }
+      event.item.selected = true;
+      view.draw();
+    }
+  }
 }
 
 function onMouseDrag(event) {
 
-  var step = event.delta / 2;
-  step.angle += 90;
+  if (activeTool == "draw") {
+    var step = event.delta / 2;
+    step.angle += 90;
 
-  var top = event.middlePoint + step;
-  var bottom = event.middlePoint - step;
+    var top = event.middlePoint + step;
+    var bottom = event.middlePoint - step;
 
-  path.add(top);
-  path.insert(0, bottom);
-  path.smooth();
-  view.draw();
+    path.add(top);
+    path.insert(0, bottom);
+    path.smooth();
+    view.draw();
 
-  // Add data to path
-  path_to_send.path.push({
-    top: top,
-    bottom: bottom
-  });
+    // Add data to path
+    path_to_send.path.push({
+      top: top,
+      bottom: bottom
+    });
 
-  // Send paths every 100ms
-  if (!timer_is_active) {
+    // Send paths every 100ms
+    if (!timer_is_active) {
 
-    send_paths_timer = setInterval(function () {
+      send_paths_timer = setInterval(function () {
 
-      socket.emit('draw:progress', room, uid, JSON.stringify(path_to_send));
-      path_to_send.path = new Array();
+        socket.emit('draw:progress', room, uid, JSON.stringify(path_to_send));
+        path_to_send.path = new Array();
 
-    }, 100);
+      }, 100);
 
+    }
+
+    timer_is_active = true;
   }
-
-  timer_is_active = true;
 
 }
 
 
 function onMouseUp(event) {
 
-  // Close the users path
-  path.add(event.point);
-  path.closed = true;
-  path.smooth();
-  view.draw();
+  if (activeTool == "draw") {
+    // Close the users path
+    path.add(event.point);
+    path.closed = true;
+    path.smooth();
+    view.draw();
 
-  // Send the path to other users
-  path_to_send.end = event.point;
-  socket.emit('draw:end', room, uid, JSON.stringify(path_to_send));
+    // Send the path to other users
+    path_to_send.end = event.point;
+    socket.emit('draw:end', room, uid, JSON.stringify(path_to_send));
 
-  // Stop new path data being added & sent
-  clearInterval(send_paths_timer);
-  path_to_send.path = new Array();
-  timer_is_active = false;
+    // Stop new path data being added & sent
+    clearInterval(send_paths_timer);
+    path_to_send.path = new Array();
+    timer_is_active = false;
+  }
 
 }
 
-
+function onKeyUp(event) {
+  if (event.key == "delete") {
+    var items = paper.project.selectedItems;
+    if (items) {
+      for (x in items) {
+        var item = items[x];
+        socket.emit('item:remove', room, uid, item.name);
+        item.remove();
+        view.draw();
+      }
+    }
+  }
+}
 
 
 
@@ -226,6 +257,16 @@ $('#exportPNG').on('click', function() {
   exportPNG();
 });
 
+$('#drawTool').on('click', function() {
+  activeTool = "draw";
+  $('#myCanvas').css('cursor', 'pointer');
+});
+
+$('#selectTool').on('click', function() {
+  activeTool = "select";
+  $('#myCanvas').css('cursor', 'default');
+});
+
 function clearCanvas() {
   // Remove all but the active layer
   if (project.layers.length > 1) {
@@ -246,7 +287,6 @@ function clearCanvas() {
 }
 
 function exportSVG() {
-  //console.log(paper.project.exportSVG());
   var svg = paper.project.exportSVG();
   encodeAsImgAndLink(svg);
 }
@@ -309,6 +349,7 @@ socket.on('user:disconnect', function (user_count) {
 });
 
 socket.on('project:load', function (json) {
+  paper.project.activeLayer.remove();
   paper.project.importJSON(json.project);
   view.draw();
 });
@@ -327,6 +368,13 @@ socket.on('loading:start', function() {
 
 socket.on('loading:end', function() {
   $('#loading').hide();
+});
+
+socket.on('item:remove', function(artist, name) {
+  if (artist != uid && paper.project.activeLayer._namedChildren[name][0]) {
+    paper.project.activeLayer._namedChildren[name][0].remove();
+    view.draw();
+  }
 });
 
 
@@ -385,6 +433,7 @@ progress_external_path = function (points, artist) {
     var start_point = new Point(points.start[1], points.start[2]);
     var color = new RgbColor(points.rgba.red, points.rgba.green, points.rgba.blue, points.rgba.opacity);
     path.fillColor = color;
+    path.name = points.name;
     path.add(start_point);
 
   }

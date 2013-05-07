@@ -137,6 +137,8 @@ function onMouseDown(event) {
       }
       event.item.selected = true;
       view.draw();
+    } else {
+      paper.project.activeLayer.selected = false;
     }
   }
 }

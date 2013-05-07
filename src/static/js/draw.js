@@ -143,6 +143,10 @@ function onMouseDown(event) {
   }
 }
 
+var item_move_delta;
+var send_item_move_timer;
+var item_move_timer_is_active = false;
+
 function onMouseDrag(event) {
 
   if (activeTool == "draw") {
@@ -176,6 +180,37 @@ function onMouseDrag(event) {
     }
 
     timer_is_active = true;
+  } else if (activeTool == "select") {
+    // Move item locally
+    for (x in paper.project.selectedItems) {
+      var item = paper.project.selectedItems[x];
+      item.position += event.delta;
+    }
+
+    // Store delta
+    if (paper.project.selectedItems) {
+      if (!item_move_delta) {
+        item_move_delta = event.delta;
+      } else {
+        item_move_delta += event.delta;
+      }
+    }
+
+    // Send move updates every 50 ms
+    if (!item_move_timer_is_active) {
+      send_item_move_timer = setInterval(function() {
+        if (item_move_delta) {
+          var itemNames = new Array();
+          for (x in paper.project.selectedItems) {
+            var item = paper.project.selectedItems[x];
+            itemNames.push(item._name);
+          }
+          socket.emit('item:move:progress', room, uid, itemNames, item_move_delta);
+          item_move_delta = null;
+        }
+      }, 50);
+    }
+    item_move_timer_is_active = true;
   }
 
 }
@@ -198,6 +233,23 @@ function onMouseUp(event) {
     clearInterval(send_paths_timer);
     path_to_send.path = new Array();
     timer_is_active = false;
+  } else if (activeTool == "select") {
+    // End movement timer
+    clearInterval(send_item_move_timer);
+    if (item_move_delta) {
+      // Send any remaining movement info
+      var itemNames = new Array();
+      for (x in paper.project.selectedItems) {
+        var item = paper.project.selectedItems[x];
+        itemNames.push(item._name);
+      }
+      socket.emit('item:move:end', room, uid, itemNames, item_move_delta);
+    } else {
+      // delta is null, so send 0 change
+      socket.emit('item:move:end', room, uid, itemNames, new Point(0, 0));
+    }
+    item_move_delta = null;
+    item_move_timer_is_active = false;
   }
 
 }
@@ -376,6 +428,18 @@ socket.on('loading:end', function() {
 socket.on('item:remove', function(artist, name) {
   if (artist != uid && paper.project.activeLayer._namedChildren[name][0]) {
     paper.project.activeLayer._namedChildren[name][0].remove();
+    view.draw();
+  }
+});
+
+socket.on('item:move', function(artist, itemNames, delta) {
+  if (artist != uid) {
+    for (x in itemNames) {
+      var itemName = itemNames[x];
+      if (paper.project.activeLayer._namedChildren[itemName][0]) {
+        paper.project.activeLayer._namedChildren[itemName][0].position += new Point(delta[1], delta[2]);
+      }
+    }
     view.draw();
   }
 });

@@ -262,6 +262,7 @@ $('#exportPNG').on('click', function() {
 $('#drawTool').on('click', function() {
   activeTool = "draw";
   $('#myCanvas').css('cursor', 'pointer');
+  paper.project.activeLayer.selected = false;
 });
 
 $('#selectTool').on('click', function() {

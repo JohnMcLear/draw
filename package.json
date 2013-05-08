@@ -1,17 +1,15 @@
 {
-  "name": "drawstuff",
-  "subdomain": "drawstuff",
-  "scripts": {
-    "start": "app.js"
-  },
-  "version": "0.0.0-14",
+  "name": "etherdraw",
+  "description": "collaborative drawing",
+  "version": "0.0.0-15",
   "engines": {
     "node": "0.6.x"
   },
   "dependencies": {
     "express": "*",
     "socket.io": "*",
-	"ueberDB": "*",
-	"canvas": "*"
+    "ueberDB": "*",
+    "canvas": "*",
+    "paper": "*"
   }
 }

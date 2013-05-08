@@ -104,6 +104,21 @@ io.sockets.on('connection', function (socket) {
     io.sockets.in(room).emit('canvas:clear');
   });
   
+  // User removes an item
+  socket.on('item:remove', function(room, uid, itemName) {
+    removeItem(room, uid, itemName);
+  });
+  
+  // User moves one or more items on their canvas - progress
+  socket.on('item:move:progress', function(room, uid, itemNames, delta) {
+    moveItemsProgress(room, uid, itemNames, delta);
+  });
+  
+  // User moves one or more items on their canvas - end
+  socket.on('item:move:end', function(room, uid, itemNames, delta) {
+    moveItemsEnd(room, uid, itemNames, delta);
+  });
+  
 });
 
 var projects = {};
@@ -139,9 +154,14 @@ function loadFromDB(room, socket) {
       }
       db.get(room, function(err, value) {
 	    if (value && projects[room].project && projects[room].project instanceof paper.Project) {
+          socket.emit('loading:start');
+          // Clear default layer as importing JSON adds a new layer.
+          // We want the project to always only have one layer.
+          projects[room].project.activeLayer.remove();
           projects[room].project.importJSON(value.project);
           socket.emit('project:load', value);
         }
+        socket.emit('loading:end');
         db.close(function(){});
       });
     });
@@ -231,6 +251,7 @@ progress_external_path = function (room, points, artist) {
     var start_point = new paper.Point(points.start[1], points.start[2]);
     var color = new paper.Color(points.rgba.red, points.rgba.green, points.rgba.blue, points.rgba.opacity);
     path.fillColor = color;
+    path.name = points.name;
     path.add(start_point);
 
   }
@@ -278,6 +299,50 @@ function clearCanvas(room) {
     // Remove all of the children from the active layer
     if (paper.project.activeLayer && paper.project.activeLayer.hasChildren()) {
       paper.project.activeLayer.removeChildren();
+    }
+    writeProjectToDB(room);
+  }
+}
+
+// Remove an item from the canvas
+function removeItem(room, artist, itemName) {
+  var project = projects[room].project;
+  if (project && project.activeLayer && project.activeLayer._namedChildren[itemName] && project.activeLayer._namedChildren[itemName][0]) {
+    project.activeLayer._namedChildren[itemName][0].remove();
+    io.sockets.in(room).emit('item:remove', artist, itemName);
+    writeProjectToDB(room);
+  }
+}
+
+// Move one or more existing items on the canvas
+function moveItemsProgress(room, artist, itemNames, delta) {
+  var project = projects[room].project;
+  if (project && project.activeLayer) {
+    for (x in itemNames) {
+      var itemName = itemNames[x];
+      if (project.activeLayer._namedChildren[itemName][0]) {
+        project.activeLayer._namedChildren[itemName][0].position.x += delta[1];
+        project.activeLayer._namedChildren[itemName][0].position.y += delta[2];
+      }
+    }
+    io.sockets.in(room).emit('item:move', artist, itemNames, delta);
+  }
+}
+
+// Move one or more existing items on the canvas
+// and write to DB
+function moveItemsEnd(room, artist, itemNames, delta) {
+  var project = projects[room].project;
+  if (project && project.activeLayer) {
+    for (x in itemNames) {
+      var itemName = itemNames[x];
+      if (project.activeLayer._namedChildren[itemName][0]) {
+        project.activeLayer._namedChildren[itemName][0].position.x += delta[1];
+        project.activeLayer._namedChildren[itemName][0].position.y += delta[2];
+      }
+    }
+    if (itemNames) {
+      io.sockets.in(room).emit('item:move', artist, itemNames, delta);
     }
     writeProjectToDB(room);
   }

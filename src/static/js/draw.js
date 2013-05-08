@@ -1,6 +1,29 @@
 tool.minDistance = 10;
 tool.maxDistance = 45;
 
+function pickColor(color) {
+  $('#color').val(color);
+  var rgb = hexToRgb(color);
+  $('#activeColorSwatch').css('background-color', 'rgb(' + rgb.r + ',' + rgb.g + ',' + rgb.b + ')');
+  update_active_color();
+}
+
+/*http://stackoverflow.com/questions/5623838/rgb-to-hex-and-hex-to-rgb*/
+function hexToRgb(hex) {
+  var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return result ? {
+    r: parseInt(result[1], 16),
+    g: parseInt(result[2], 16),
+    b: parseInt(result[3], 16)
+  } : null;
+}
+
+
+$(document).ready(function() {
+  $('#colorpicker').farbtastic(pickColor);
+});
+
+$('#activeColorSwatch').css('background-color', $('.colorSwatch.active').css('background-color'));
 
 // Initialise Socket.io
 var socket = io.connect('/');
@@ -40,20 +63,16 @@ var path_to_send = {};
 var active_color_rgb;
 var active_color_json = {};
 var $opacity = $('#opacity');
-var update_active_color = function (r, g, b) {
-  var rgb_array = $('.active').attr('data-color').split(',');
+var update_active_color = function () {
+  var rgb_array = $('#activeColorSwatch').css('background-color');
+  while(rgb_array.indexOf(" ") > -1) {
+    rgb_array = rgb_array.replace(" ", "");
+  }
+  rgb_array = rgb_array.substr(4, rgb_array.length-5);
+  rgb_array = rgb_array.split(',');
   var red = rgb_array[0] / 255;
-  if (r) {
-    red = r / 255;
-  }
   var green = rgb_array[1] / 255;
-  if (g) {
-    green = g / 255;
-  }
   var blue = rgb_array[2] / 255;
-  if (b) {
-    blue = b / 255;
-  }
   var opacity = $opacity.val() / 255;
 
   active_color_rgb = new RgbColor(red, green, blue, opacity);
@@ -74,15 +93,9 @@ var authorColors = {};
 if (authorColor != "" && authorColor.substr(0,4) == "rgb(") {
   authorColor = authorColor.substr(4, authorColor.indexOf(")")-4);
   authorColors = authorColor.split(",");
-  if (authorColors.length == 3) {
-    update_active_color(authorColors[0], authorColors[1], authorColors[2]);
-  } else {
-    update_active_color();
-  }
-} else {
-  update_active_color();
+  $('#activeColorSwatch').css('background-color', 'rgb(' + authorColors[0] + ',' + authorColors[1] + ',' + authorColors[2] + ')');
 }
-
+update_active_color();
 
 
 
@@ -94,81 +107,166 @@ if (authorColor != "" && authorColor.substr(0,4) == "rgb(") {
 
 var send_paths_timer;
 var timer_is_active = false;
+var paper_object_count = 0;
+var activeTool = "draw";
 
 function onMouseDown(event) {
 
-  var point = event.point;
+  if (activeTool == "draw") {
+    var point = event.point;
 
-  path = new Path();
-  path.fillColor = active_color_rgb;
-  path.add(event.point);
-  view.draw();
+    path = new Path();
+    path.fillColor = active_color_rgb;
+    path.add(event.point);
+    path.name = uid + ":" + (++paper_object_count);
+    view.draw();
 
-  // The data we will send every 100ms on mouse drag
-  path_to_send = {
-    rgba: active_color_json,
-    start: event.point,
-    path: []
-  };
-
+    // The data we will send every 100ms on mouse drag
+    path_to_send = {
+      name: path.name,
+      rgba: active_color_json,
+      start: event.point,
+      path: []
+    };
+  } else if (activeTool == "select") {
+    // Select item
+    if (event.item) {
+      // If holding shift key down, don't clear selection - allows multiple selections
+      if (!event.event.shiftKey) {
+        paper.project.activeLayer.selected = false;
+      }
+      event.item.selected = true;
+      view.draw();
+    } else {
+      paper.project.activeLayer.selected = false;
+    }
+  }
 }
+
+var item_move_delta;
+var send_item_move_timer;
+var item_move_timer_is_active = false;
 
 function onMouseDrag(event) {
 
-  var step = event.delta / 2;
-  step.angle += 90;
+  if (activeTool == "draw") {
+    var step = event.delta / 2;
+    step.angle += 90;
 
-  var top = event.middlePoint + step;
-  var bottom = event.middlePoint - step;
+    var top = event.middlePoint + step;
+    var bottom = event.middlePoint - step;
 
-  path.add(top);
-  path.insert(0, bottom);
-  path.smooth();
-  view.draw();
+    path.add(top);
+    path.insert(0, bottom);
+    path.smooth();
+    view.draw();
 
-  // Add data to path
-  path_to_send.path.push({
-    top: top,
-    bottom: bottom
-  });
+    // Add data to path
+    path_to_send.path.push({
+      top: top,
+      bottom: bottom
+    });
 
-  // Send paths every 100ms
-  if (!timer_is_active) {
+    // Send paths every 100ms
+    if (!timer_is_active) {
 
-    send_paths_timer = setInterval(function () {
+      send_paths_timer = setInterval(function () {
 
-      socket.emit('draw:progress', room, uid, JSON.stringify(path_to_send));
-      path_to_send.path = new Array();
+        socket.emit('draw:progress', room, uid, JSON.stringify(path_to_send));
+        path_to_send.path = new Array();
 
-    }, 100);
+      }, 100);
 
+    }
+
+    timer_is_active = true;
+  } else if (activeTool == "select") {
+    // Move item locally
+    for (x in paper.project.selectedItems) {
+      var item = paper.project.selectedItems[x];
+      item.position += event.delta;
+    }
+
+    // Store delta
+    if (paper.project.selectedItems) {
+      if (!item_move_delta) {
+        item_move_delta = event.delta;
+      } else {
+        item_move_delta += event.delta;
+      }
+    }
+
+    // Send move updates every 50 ms
+    if (!item_move_timer_is_active) {
+      send_item_move_timer = setInterval(function() {
+        if (item_move_delta) {
+          var itemNames = new Array();
+          for (x in paper.project.selectedItems) {
+            var item = paper.project.selectedItems[x];
+            itemNames.push(item._name);
+          }
+          socket.emit('item:move:progress', room, uid, itemNames, item_move_delta);
+          item_move_delta = null;
+        }
+      }, 50);
+    }
+    item_move_timer_is_active = true;
   }
-
-  timer_is_active = true;
 
 }
 
 
 function onMouseUp(event) {
 
-  // Close the users path
-  path.add(event.point);
-  path.closed = true;
-  path.smooth();
-  view.draw();
+  if (activeTool == "draw") {
+    // Close the users path
+    path.add(event.point);
+    path.closed = true;
+    path.smooth();
+    view.draw();
 
-  // Send the path to other users
-  path_to_send.end = event.point;
-  socket.emit('draw:end', room, uid, JSON.stringify(path_to_send));
+    // Send the path to other users
+    path_to_send.end = event.point;
+    socket.emit('draw:end', room, uid, JSON.stringify(path_to_send));
 
-  // Stop new path data being added & sent
-  clearInterval(send_paths_timer);
-  path_to_send.path = new Array();
-  timer_is_active = false;
+    // Stop new path data being added & sent
+    clearInterval(send_paths_timer);
+    path_to_send.path = new Array();
+    timer_is_active = false;
+  } else if (activeTool == "select") {
+    // End movement timer
+    clearInterval(send_item_move_timer);
+    if (item_move_delta) {
+      // Send any remaining movement info
+      var itemNames = new Array();
+      for (x in paper.project.selectedItems) {
+        var item = paper.project.selectedItems[x];
+        itemNames.push(item._name);
+      }
+      socket.emit('item:move:end', room, uid, itemNames, item_move_delta);
+    } else {
+      // delta is null, so send 0 change
+      socket.emit('item:move:end', room, uid, itemNames, new Point(0, 0));
+    }
+    item_move_delta = null;
+    item_move_timer_is_active = false;
+  }
 
 }
 
-
+function onKeyUp(event) {
+  if (event.key == "delete") {
+    var items = paper.project.selectedItems;
+    if (items) {
+      for (x in items) {
+        var item = items[x];
+        socket.emit('item:remove', room, uid, item.name);
+        item.remove();
+        view.draw();
+      }
+    }
+  }
+}
 
 
 
@@ -180,14 +278,18 @@ function onMouseUp(event) {
 // --------------------------------- 
 // CONTROLS EVENTS
 
-var $color = $('.color');
+var $color = $('.colorSwatch:not(#pickerSwatch)');
 $color.on('click', function () {
 
   $color.removeClass('active');
   $(this).addClass('active');
-
+  $('#activeColorSwatch').css('background-color', $(this).css('background-color'));
   update_active_color();
 
+});
+
+$('#pickerSwatch').on('click', function() {
+  $('#myColorPicker').fadeToggle();
 });
 
 $opacity.on('change', function () {
@@ -207,6 +309,17 @@ $('#exportSVG').on('click', function() {
 
 $('#exportPNG').on('click', function() {
   exportPNG();
+});
+
+$('#drawTool').on('click', function() {
+  activeTool = "draw";
+  $('#myCanvas').css('cursor', 'pointer');
+  paper.project.activeLayer.selected = false;
+});
+
+$('#selectTool').on('click', function() {
+  activeTool = "select";
+  $('#myCanvas').css('cursor', 'default');
 });
 
 function clearCanvas() {
@@ -229,7 +342,6 @@ function clearCanvas() {
 }
 
 function exportSVG() {
-  //console.log(paper.project.exportSVG());
   var svg = paper.project.exportSVG();
   encodeAsImgAndLink(svg);
 }
@@ -292,6 +404,7 @@ socket.on('user:disconnect', function (user_count) {
 });
 
 socket.on('project:load', function (json) {
+  paper.project.activeLayer.remove();
   paper.project.importJSON(json.project);
   view.draw();
 });
@@ -302,6 +415,33 @@ socket.on('project:load:error', function() {
 
 socket.on('canvas:clear', function() {
   clearCanvas();
+});
+
+socket.on('loading:start', function() {
+  $('#loading').show();
+});
+
+socket.on('loading:end', function() {
+  $('#loading').hide();
+});
+
+socket.on('item:remove', function(artist, name) {
+  if (artist != uid && paper.project.activeLayer._namedChildren[name][0]) {
+    paper.project.activeLayer._namedChildren[name][0].remove();
+    view.draw();
+  }
+});
+
+socket.on('item:move', function(artist, itemNames, delta) {
+  if (artist != uid) {
+    for (x in itemNames) {
+      var itemName = itemNames[x];
+      if (paper.project.activeLayer._namedChildren[itemName][0]) {
+        paper.project.activeLayer._namedChildren[itemName][0].position += new Point(delta[1], delta[2]);
+      }
+    }
+    view.draw();
+  }
 });
 
 
@@ -360,6 +500,7 @@ progress_external_path = function (points, artist) {
     var start_point = new Point(points.start[1], points.start[2]);
     var color = new RgbColor(points.rgba.red, points.rgba.green, points.rgba.blue, points.rgba.opacity);
     path.fillColor = color;
+    path.name = points.name;
     path.add(start_point);
 
   }

@@ -18,7 +18,16 @@ font-size:10px;
 width:40px;
 }
 
-.color {
+#activeColorSwatch{
+display:inline-block;
+width:37px;
+height:15px;
+border:2px solid #ccc;
+opacity:1;
+margin:0;
+}
+
+.colorSwatch{
 display:inline-block;
 width:15px;
 height:15px;
@@ -28,6 +37,32 @@ opacity:0.3;
 margin:0;
 }
 
-.color.active {
+.colorSwatch.active {
 opacity:1;
+}
+
+#pickerSwatch {
+opacity:1;
+background-image:url('/static/images/wheel.png');
+background-size:100%;
+}
+
+.hidden {
+display:none;
+}
+
+#colorpicker {
+opacity:1;
+}
+
+#myColorPicker {
+display:none;
+position:absolute;
+top:0px;
+right:100px;
+z-index:100
+}
+
+#myCanvas {
+cursor:pointer;
 }

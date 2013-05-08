@@ -9,6 +9,7 @@
     "express": "*",
     "socket.io": "*",
     "ueberDB": "*",
-    "canvas": "*"
+    "canvas": "*",
+    "paper": "*"
   }
 }

@@ -9,6 +9,8 @@ paper.setup(new paper.Canvas(1920, 1080));
 var socket = require('socket.io');
 var ueberDB = require("ueberDB");
 var db = new ueberDB.database("dirty", {"filename" : "var/dirty.db"});
+var async = require('async');
+var fs = require('fs');
 
 app.configure(function(){
   app.use(express.static(__dirname + '/'));
@@ -52,6 +54,91 @@ app.get('/', function(req, res){
 app.get('/d/*', function(req, res){
   res.sendfile(__dirname + '/src/static/html/draw.html');
 });
+
+// Front-end tests
+app.get('/tests/frontend/specs_list.js', function(req, res){
+
+  async.parallel({
+    coreSpecs: function(callback){
+      exports.getCoreTests(callback);
+    },
+    pluginSpecs: function(callback){
+      exports.getPluginTests(callback);
+    }
+  },
+  function(err, results){
+    var files = results.coreSpecs; // push the core specs to a file object
+    files = files.concat(results.pluginSpecs); // add the plugin Specs to the core specs
+    //console.debug("Sent browser the following test specs:", files.sort());
+    console.log("Sent browser the following test specs:", files.sort());
+    res.send("var specs_list = " + JSON.stringify(files.sort()) + ";\n");
+  });
+
+});
+
+// Used for front-end tests
+var url2FilePath = function(url){
+  var subPath = url.substr("/tests/frontend".length);
+  if (subPath == ""){
+    subPath = "index.html"
+  }
+  subPath = subPath.split("?")[0];
+
+  var filePath = path.normalize(npm.root + "/../tests/frontend/")
+  filePath += subPath.replace("..", "");
+  return filePath;
+}
+
+// Used for front-end tests
+app.get('/tests/frontend/specs/*', function (req, res) {
+  var specFilePath = url2FilePath(req.url);
+  var specFileName = path.basename(specFilePath);
+
+  fs.readFile(specFilePath, function(err, content){
+    if(err){ return res.send(500); }
+ 
+    content = "describe(" + JSON.stringify(specFileName) + ", function(){   " + content + "   });";
+
+    res.send(content);
+  }); 
+});
+
+// Used for front-end tests
+app.get('/tests/frontend/*', function (req, res) {
+  var filePath = url2FilePath(req.url);
+  res.sendfile(filePath);
+});
+
+// Used for front-end tests
+app.get('/tests/frontend', function (req, res) {
+  res.redirect('/tests/frontend/');
+});
+
+// Used for front-end tests
+exports.getPluginTests = function(callback){
+  var pluginSpecs = [];
+  var plugins = fs.readdirSync('node_modules');
+  plugins.forEach(function(plugin){
+    if(fs.existsSync("node_modules/"+plugin+"/static/tests/frontend/specs")){ // if plugins exists
+      var specFiles = fs.readdirSync("node_modules/"+plugin+"/static/tests/frontend/specs/");
+      async.forEach(specFiles, function(spec){ // for each specFile push it to pluginSpecs
+         pluginSpecs.push("/static/plugins/"+plugin+"/static/tests/frontend/specs/" + spec);
+      },
+      function(err){
+         // blow up if something bad happens!
+      });
+    }
+  });
+  callback(null, pluginSpecs);
+}
+
+// Used for front-end tests
+exports.getCoreTests = function(callback){
+  fs.readdir('tests/frontend/specs', function(err, coreSpecs){ // get the core test specs
+    if(err){ return res.send(500); }
+    callback(null, coreSpecs);
+  });
+}
 
 // Static files IE Javascript and CSS
 app.use("/static", express.static(__dirname + '/src/static'));
@@ -157,8 +244,8 @@ function loadFromDB(room, socket) {
           socket.emit('loading:start');
           // Clear default layer as importing JSON adds a new layer.
           // We want the project to always only have one layer.
-          projects[room].project.activeLayer.remove();
-          projects[room].project.importJSON(value.project);
+          project.activeLayer.remove();
+          project.importJSON(value.project);
           socket.emit('project:load', value);
         }
         socket.emit('loading:end');

@@ -6,14 +6,18 @@ var helper = {};
   helper.init = function(cb){
     $iframeContainer = $("#iframe-container");
 
-    $.get('/static/js/lib/jquery.js').done(function(code){ 
+    $.get('/static/js/lib/jquery.js').done(function(code) { 
       // make sure we don't override existing jquery
       jsLibraries["jquery"] = "if(typeof $ === 'undefined') {\n" + code + "\n}";
+	  
+      $.get('/tests/frontend/js/lib/jquery.simulate.js').done(function(code) {
+        jsLibraries["simulate"] = code;
 
-      $.get('/tests/frontend/js/lib/sendkeys.js').done(function(code){ 
-        jsLibraries["sendkeys"] = code;
+        $.get('/tests/frontend/js/lib/sendkeys.js').done(function(code) { 
+          jsLibraries["sendkeys"] = code;
 
-        cb();
+          cb();
+        });
       });
     });
   }
@@ -45,18 +49,19 @@ var helper = {};
 
     win.eval(jsLibraries["jquery"]);
     win.eval(jsLibraries["sendkeys"]);
-    
+    win.eval(jsLibraries["simulate"]);
+
     win.$.window = win;
     win.$.document = doc;
 
     return win.$;
   }
 
-  helper.clearCookies = function(){
+  helper.clearCookies = function() {
     window.document.cookie = "";
   }
 
-  helper.newPad = function(cb, padName){
+  helper.newPad = function(cb, padName) {
     //build opts object
     var opts = {clearCookies: true}
     if (typeof cb === 'function'){
@@ -73,13 +78,14 @@ var helper = {};
     if (!padName) {
       padName = "FRONTEND_TEST_" + helper.randomString(20);
     }
-    $iframe = $("<iframe src='/d/" + padName + "'></iframe>");
+    // name attribute allows us to access javascript namespace from window.ifr1
+    $iframe = $("<iframe src='/d/" + padName + "' name='ifr1' id='ifr1'></iframe>");
 
     //clean up inner iframe references
     helper.padChrome$ = helper.padOuter$ = helper.padInner$ = null;
 
     //clean up iframes properly to prevent IE from memoryleaking
-    $iframeContainer.find("iframe").purgeFrame().done(function(){
+    $iframeContainer.find("iframe").purgeFrame().done(function() {
       $iframeContainer.append($iframe);
       $iframe.one('load', function(){  
         helper.waitFor(function(){
@@ -94,7 +100,6 @@ var helper = {};
           helper.padChrome$.fx.off = true;
           //helper.padOuter$.fx.off = true;
           //helper.padInner$.fx.off = true;
-
           opts.cb();
         }).fail(function(){
           throw new Error("Pad never loaded");

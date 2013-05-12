@@ -227,6 +227,9 @@ function onMouseUp(event) {
 
     // Send the path to other users
     path_to_send.end = event.point;
+    // This covers the case where paths are created in less than 100 seconds
+    // it does add a duplicate segment, but that is okay for now.
+    socket.emit('draw:progress', room, uid, JSON.stringify(path_to_send));
     socket.emit('draw:end', room, uid, JSON.stringify(path_to_send));
 
     // Stop new path data being added & sent

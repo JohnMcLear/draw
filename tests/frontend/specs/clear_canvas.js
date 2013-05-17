@@ -1,4 +1,4 @@
-describe("Draw a path", function(){
+describe("Clear canvas", function(){
 
   var oldPadName,
       padName,
@@ -78,4 +78,43 @@ describe("Draw a path", function(){
     done();
   });
 
+  it("clears local canvas", function(done) {
+    this.timeout(10000);
+    var chrome$ = helper.padChrome$;
+    chrome$("#clearCanvas").click();
+
+    if (window.frames[0].paper.project.activeLayer.children.length != 0) {
+      throw new Error("Project is not empty. Number of children = " + window.frames[0].paper.project.activeLayer.children.length + " instead of 0.");
+    }
+    done();
+  });
+  
+  reloaded = false;
+  
+  it("reloads same pad", function(done) {
+    this.timeout(60000);
+    padName = helper.newPad(function() {
+      var padsEqual = padName == oldPadName;
+      if (padsEqual) {
+        reloaded = true;
+      }
+      expect(padsEqual).to.be(true); // Expect old pad name to be new pad name (reloaded same pad)
+      done();
+    }, oldPadName);
+  });
+  
+  it("clears server canvas (empty on reload)", function(done) {
+    this.timeout(10000);
+
+    if (!reloaded) {
+      throw new Error("Reloads same pad test failed.");
+    }
+
+    var projectChildren = window.frames[0].paper.project.activeLayer.children.length;
+    // Expect the number of children to be zero (project is empty)
+    if (projectChildren != 0) {
+      throw new Error("Project is not empty. Number of children = " + projectChildren + " instead of 0.");
+    }
+    done();
+  });
 });

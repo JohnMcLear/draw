@@ -79,7 +79,7 @@ var helper = {};
       padName = "FRONTEND_TEST_" + helper.randomString(20);
     }
     // name attribute allows us to access javascript namespace from window.ifr1
-    $iframe = $("<iframe src='/d/" + padName + "' name='ifr1' id='ifr1'></iframe>");
+    $iframe = $("<iframe src='/d/" + padName + "'></iframe>");
 
     //clean up inner iframe references
     helper.padChrome$ = helper.padOuter$ = helper.padInner$ = null;

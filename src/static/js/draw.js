@@ -379,7 +379,7 @@ function encodeAsImgAndLink(svg){
   var b64 = Base64.encode(dummy.innerHTML);
 
   //window.winsvg = window.open("data:image/svg+xml;base64,\n"+b64);
-  var html = "<img style='height:100%;width:100%;' src='data:image/svg+xml;base64,"+b64+"' />"
+  var html = "<img style='height:100%;width:100%;' src='data:image/svg+xml;base64," + b64 + "' />"
   window.winsvg = window.open();
   window.winsvg.document.write(html);
   window.winsvg.document.body.style.margin = 0;
@@ -391,7 +391,10 @@ function encodeAsImgAndLink(svg){
 // for a POST.
 function exportPNG() {
   var canvas = document.getElementById('myCanvas');
-  window.open(canvas.toDataURL('image/png'));
+  var html = "<img src='" + canvas.toDataURL('image/png') + "' />"
+  window.winpng = window.open();
+  window.winpng.document.write(html);
+  window.winpng.document.body.style.margin = 0;
 }
 
 

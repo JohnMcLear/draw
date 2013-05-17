@@ -1,4 +1,4 @@
-describe("Export SVG", function(){
+describe("Export PNG", function(){
 
   var oldPadName,
       padName,
@@ -31,36 +31,28 @@ describe("Export SVG", function(){
     done();
   });
   
-  it("exports svg", function(done) {
+  it("exports png", function(done) {
     this.timeout(60000);
     var chrome$ = helper.padChrome$;
-    chrome$("#exportSVG").click();
+    chrome$("#exportPNG").click();
 
-    var svg = window.frames[0].paper.project.exportSVG();
-    svg.setAttribute('version', '1.1');
-    svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+    var png = window.frames[0].document.getElementById('myCanvas').toDataURL('image/png');
 
-    var dummy = document.createElement('div');
-    dummy.appendChild(svg);
-    var b64 = Base64.encode(dummy.innerHTML);
-
-    if (!window.frames[0].winsvg) {
+    if (!window.frames[0].winpng) {
       throw new Error("New window was not created. Are popups blocked?");
     }
-    if (!window.frames[0].winsvg.document) {
+    if (!window.frames[0].winpng.document) {
       throw new Error("New window's html document was not created.");
     }
-    if (window.frames[0].winsvg.document.getElementsByTagName('img').length < 1) {
+    if (window.frames[0].winpng.document.getElementsByTagName('img').length < 1) {
       throw new Error("New window doesn't have an img element.");
     }
-    var src = window.frames[0].winsvg.document.getElementsByTagName('img')[0].src;
-    var src64 = src.split(',');
-    src64 = src64[src64.length-1];
-    if (src64 != b64) {
-      window.frames[0].winsvg.close();
-      throw new Error("SVG data URI incorrect.\nIs: " + src64 + "\nShould be: " + b64);
+    var src = window.frames[0].winpng.document.getElementsByTagName('img')[0].src;
+    if (src != png) {
+      window.frames[0].winpng.close();
+      throw new Error("PNG data URI incorrect.\nIs: " + src + "\nShould be: " + png);
     }
-    window.frames[0].winsvg.close();
+    window.frames[0].winpng.close();
     done();
   });
 });

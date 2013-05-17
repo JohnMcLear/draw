@@ -112,6 +112,11 @@ var activeTool = "draw";
 
 function onMouseDown(event) {
 
+  // Ignore middle or right mouse button clicks for now
+  if (event.event.button == 1 || event.event.button == 2) {
+    return;
+  }
+  
   if (activeTool == "draw") {
     var point = event.point;
 
@@ -148,6 +153,11 @@ var send_item_move_timer;
 var item_move_timer_is_active = false;
 
 function onMouseDrag(event) {
+
+  // Ignore middle or right mouse button clicks for now
+  if (event.event.button == 1 || event.event.button == 2) {
+    return;
+  }
 
   if (activeTool == "draw") {
     var step = event.delta / 2;
@@ -217,6 +227,11 @@ function onMouseDrag(event) {
 
 
 function onMouseUp(event) {
+
+  // Ignore middle or right mouse button clicks for now
+  if (event.event.button == 1 || event.event.button == 2) {
+    return;
+  }
 
   if (activeTool == "draw") {
     // Close the users path

@@ -27,7 +27,7 @@ describe("Clear canvas", function(){
     var numSegments = layer.children[0]._segments.length;
     expect(numSegments).to.be(8); // Expect 8 segments to this path
     oldPadName = padName;
-	path = window.frames[0].paper.project.activeLayer.children[0]; // Save path for later test
+    path = window.frames[0].paper.project.activeLayer.children[0]; // Save path for later test
     done();
   });
   

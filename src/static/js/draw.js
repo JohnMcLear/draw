@@ -378,9 +378,17 @@ function encodeAsImgAndLink(svg){
 
   var b64 = Base64.encode(dummy.innerHTML);
 
-  window.open("data:image/svg+xml;base64,\n"+b64);
+  //window.winsvg = window.open("data:image/svg+xml;base64,\n"+b64);
+  var html = "<img style='height:100%;width:100%;' src='data:image/svg+xml;base64,"+b64+"' />"
+  window.winsvg = window.open();
+  window.winsvg.document.write(html);
+  window.winsvg.document.body.style.margin = 0;
 }
 
+// Encodes png as a base64 text and opens a new browser window
+// to the png image that can be saved as a .png on the users
+// local filesystem. This skips making a round trip to the server
+// for a POST.
 function exportPNG() {
   var canvas = document.getElementById('myCanvas');
   window.open(canvas.toDataURL('image/png'));

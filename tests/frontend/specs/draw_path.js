@@ -25,7 +25,7 @@ describe("Draw a path", function(){
     expect(numChildren).to.be(1); // Expect only one child node to be on canvas
 
     var numSegments = layer.children[0]._segments.length;
-    expect(numSegments).to.be(8); // Expect 8 segments to this path
+    expect(numSegments).to.be(8); // Expect 8 segments for this path
     oldPadName = padName;
     path = window.frames[0].paper.project.activeLayer.children[0]; // Save path for later test
     done();

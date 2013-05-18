@@ -50,15 +50,27 @@ describe("Export SVG", function(){
     if (!window.frames[0].winsvg.document) {
       throw new Error("New window's html document was not created.");
     }
-    if (window.frames[0].winsvg.document.getElementsByTagName('img').length < 1) {
-      throw new Error("New window doesn't have an img element.");
-    }
-    var src = window.frames[0].winsvg.document.getElementsByTagName('img')[0].src;
-    var src64 = src.split(',');
-    src64 = src64[src64.length-1];
-    if (src64 != b64) {
-      window.frames[0].winsvg.close();
-      throw new Error("SVG data URI incorrect.\nIs: " + src64 + "\nShould be: " + b64);
+    if (chrome$.browser.msie) { // IE uses an svg element instead of an img element
+      if (window.frames[0].winsvg.document.getElementsByTagName('svg').length < 1) {
+        window.frames[0].winsvg.close();
+        throw new Error("New window doesn't have an svg element.");
+      }
+      var svg2 = window.frames[0].winsvg.document.getElementsByTagName('svg')[0];
+      if (svg.isEqualNode(svg2)) {
+        throw new Error("SVG element doesn't match.");
+      }
+    } else {
+      if (window.frames[0].winsvg.document.getElementsByTagName('img').length < 1) {
+        window.frames[0].winsvg.close();
+        throw new Error("New window doesn't have an img element.");
+      }
+      var src = window.frames[0].winsvg.document.getElementsByTagName('img')[0].src;
+      var src64 = src.split(',');
+      src64 = src64[src64.length-1];
+      if (src64 != b64) { // Compare base64 conversions of the SVG
+        window.frames[0].winsvg.close();
+        throw new Error("SVG data URI incorrect.\nIs: " + src64 + "\nShould be: " + b64);
+      }
     }
     window.frames[0].winsvg.close();
     done();

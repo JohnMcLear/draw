@@ -1,4 +1,4 @@
-describe("Selection tool", function() {
+describe("Select items", function() {
 
   var oldPadName,
       padName,

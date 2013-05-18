@@ -295,12 +295,17 @@ $.extend( $.simulate.prototype, {
 			target = this.target,
 			options = this.options,
 			center = options.handle === "corner" ? findCorner( target ) : findCenter( target ),
-			x = Math.floor( center.x ),
-			y = Math.floor( center.y ),
+			/* Modified by tranek http://www.github.com/tranek */
+			x = options.clientX || Math.floor( center.x ),
+			y = options.clientY || Math.floor( center.y ),
 			coord = { clientX: x, clientY: y },
 			dx = options.dx || ( options.x !== undefined ? options.x - x : 0 ),
 			dy = options.dy || ( options.y !== undefined ? options.y - y : 0 ),
 			moves = options.moves || 3;
+		
+		if (options.shiftKey !== undefined) {
+			coord.shiftKey = options.shiftKey;
+		}
 
 		this.simulateEvent( target, "mousedown", coord );
 

@@ -1,4 +1,4 @@
-describe("Selection tool", function() {
+describe("Delete items", function() {
 
   var oldPadName,
       padName,
@@ -85,32 +85,23 @@ describe("Selection tool", function() {
     }
     done();
   });
-
-  it("clicking blank canvas selects nothing", function(done) {
+  
+  it("doesn't delete anything when nothing is selected", function(done) {
     this.timeout(60000);
-
     var numChildren = window.frames[0].paper.project.activeLayer.children.length;
     if (numChildren !== 3) {
-      throw new Error("Incorrect number of children in project. Found " + numChildren + " but expected 3.");
-    }
-    if (!path1) {
-      throw new Error("Path1 does not exist");
-    }
-    if (!path2) {
-      throw new Error("Path2 does not exist");
-    }
-    if (!path3) {
-      throw new Error("Path3 does not exist");
+      throw new Error("Incorrect number of children in the project. Found " + numChildren + " but expected 3.");
     }
 
     var chrome$ = helper.padChrome$;
-    var canvas = chrome$("#myCanvas");
-    // Simulate clicking blank area of canvas
-    canvas.simulate('mousedown', {clientX: 10, clientY: 10});
-    canvas.simulate('mouseup', {clientX: 10, clientY: 10});
 
-    if (window.frames[0].paper.project.selectedItems.length > 0) { // Expect nothing to be selected
-      throw new Error("Items are selected.");
+    var canvas = chrome$("#myCanvas");
+    // Simulate pressing the delete key
+    canvas.simulate('keyDown', {key: 'delete'});
+    canvas.simulate('keyUp', {key: 'delete'});
+    numChildren = window.frames[0].paper.project.activeLayer.children.length;
+    if (numChildren !== 3) { // Expect the number of children to be 3
+      throw new Error("Incorrect number of children in the project. Found " + numChildren + " but expected 3.");
     }
     done();
   });
@@ -132,6 +123,9 @@ describe("Selection tool", function() {
       throw new Error("Path3 does not exist");
     }
 
+    // Make sure nothing is selected
+    window.frames[0].paper.project.activeLayer.selected = false;
+
     var chrome$ = helper.padChrome$;
     var canvas = chrome$("#myCanvas");
     // Simulate clicking path3
@@ -145,7 +139,7 @@ describe("Selection tool", function() {
     done();
   });
   
-  it("selects itself (click same path)", function(done) {
+  it("deletes single path", function(done) {
     this.timeout(60000);
 
     var numChildren = window.frames[0].paper.project.activeLayer.children.length;
@@ -166,93 +160,21 @@ describe("Selection tool", function() {
       throw new Error("Items selected = " + itemsSelected + " instead of just 1.");
     }
 
-    // Save selected item for comparison after selecting new item
-    var selectedItem = window.frames[0].paper.project.selectedItems[0];
-
-    var chrome$ = helper.padChrome$;
-    var canvas = chrome$("#myCanvas");
-    // Simulate clicking path3
-    canvas.simulate('mousedown', {clientX: center3.x, clientY: center3.y});
-    canvas.simulate('mouseup', {clientX: center3.x, clientY: center3.y});
-
-    itemsSelected = window.frames[0].paper.project.selectedItems.length;
-    if (itemsSelected !== 1) { // Expect only one path to be selected
-      throw new Error("Items selected = " + itemsSelected + " instead of just 1.");
-    }
-    // Expect the newly selected item to be the same as the old selected item
-    if (selectedItem !== window.frames[0].paper.project.selectedItems[0]) {
-      throw new Error("Selected item is not the same as the previously selected item.");
-    }
-    done();
-  });
-  
-  it("selects different path", function(done) {
-    this.timeout(60000);
-
-    var numChildren = window.frames[0].paper.project.activeLayer.children.length;
-    if (numChildren !== 3) {
-      throw new Error("Incorrect number of children in project. Found " + numChildren + " but expected 3.");
-    }
-    if (!path1) {
-      throw new Error("Path1 does not exist");
-    }
-    if (!path2) {
-      throw new Error("Path2 does not exist");
-    }
-    if (!path3) {
-      throw new Error("Path3 does not exist");
-    }
-    var itemsSelected = window.frames[0].paper.project.selectedItems.length;
-    if (itemsSelected !== 1) { // Expect only one path to be selected
-      throw new Error("Items selected = " + itemsSelected + " instead of just 1.");
-    }
-
-    // Save selected item for comparison after selecting new item
-    var selectedItem = window.frames[0].paper.project.selectedItems[0];
-
-    var chrome$ = helper.padChrome$;
-    var canvas = chrome$("#myCanvas");
-    // Simulate clicking path1
-    canvas.simulate('mousedown', {clientX: center1.x, clientY: center1.y});
-    canvas.simulate('mouseup', {clientX: center1.x, clientY: center1.y});
-
-    var itemsSelected = window.frames[0].paper.project.selectedItems.length;
-    if (itemsSelected !== 1) { // Expect only one path to be selected
-      throw new Error("Items selected = " + itemsSelected + " instead of just 1.");
-    }
-    // Expect the newly selected item to be the same as the old selected item
-    if (selectedItem === window.frames[0].paper.project.selectedItems[0]) {
-      throw new Error("Selected item is the same as the previously selected item.");
-    }
-    done();
-  });
-
-  it("clicking blank canvas deselects selected path", function(done) {
-    this.timeout(60000);
-
-    var numChildren = window.frames[0].paper.project.activeLayer.children.length;
-    if (numChildren !== 3) {
-      throw new Error("Incorrect number of children in project. Found " + numChildren + " but expected 3.");
-    }
-    if (!path1) {
-      throw new Error("Path1 does not exist");
-    }
-    if (!path2) {
-      throw new Error("Path2 does not exist");
-    }
-    if (!path3) {
-      throw new Error("Path3 does not exist");
+    // Make sure path 3 is selected
+    if (window.frames[0].paper.project.activeLayer.children[2].selected == false) {
+      window.frames[0].paper.project.activeLayer.selected = false; // Clear any selections
+      window.frames[0].paper.project.activeLayer.children[2].selected = true;
     }
 
     var chrome$ = helper.padChrome$;
-    var canvas = chrome$("#myCanvas");
-    // Simulate clicking blank area of canvas
-    canvas.simulate('mousedown', {clientX: 10, clientY: 10});
-    canvas.simulate('mouseup', {clientX: 10, clientY: 10});
 
-    var itemsSelected = window.frames[0].paper.project.selectedItems.length;
-    if (itemsSelected !== 0) { // Expect nothing to be selected
-      throw new Error("Items selected = " + itemsSelected + " instead of 0.");
+    var canvas = chrome$("#myCanvas");
+    // Simulate pressing the delete key
+	canvas.simulate('keydown', {keyCode: 46});
+    canvas.simulate('keyup', {keyCode: 46});
+    numChildren = window.frames[0].paper.project.activeLayer.children.length;
+    if (numChildren !== 2) { // Expect the number of children to be 2
+      throw new Error("Incorrect number of children in the project. Found " + numChildren + " but expected 2.");
     }
     done();
   });
@@ -269,9 +191,6 @@ describe("Selection tool", function() {
     }
     if (!path2) {
       throw new Error("Path2 does not exist");
-    }
-    if (!path3) {
-      throw new Error("Path3 does not exist");
     }
 
     // Make sure nothing is selected
@@ -293,12 +212,12 @@ describe("Selection tool", function() {
     done();
   });
 
-  it("clicking blank canvas deselects selected paths", function(done) {
+  it("deletes multiple paths", function(done) {
     this.timeout(60000);
 
     var numChildren = window.frames[0].paper.project.activeLayer.children.length;
-    if (numChildren !== 3) {
-      throw new Error("Incorrect number of children in project. Found " + numChildren + " but expected 3.");
+    if (numChildren !== 2) {
+      throw new Error("Incorrect number of children in project. Found " + numChildren + " but expected 2.");
     }
     if (!path1) {
       throw new Error("Path1 does not exist");
@@ -306,19 +225,15 @@ describe("Selection tool", function() {
     if (!path2) {
       throw new Error("Path2 does not exist");
     }
-    if (!path3) {
-      throw new Error("Path3 does not exist");
-    }
 
     var chrome$ = helper.padChrome$;
     var canvas = chrome$("#myCanvas");
-    // Simulate clicking blank area of canvas
-    canvas.simulate('mousedown', {clientX: 10, clientY: 10});
-    canvas.simulate('mouseup', {clientX: 10, clientY: 10});
-
-    var itemsSelected = window.frames[0].paper.project.selectedItems.length;
-    if (itemsSelected !== 0) { // Expect nothing to be selected
-      throw new Error("Items selected = " + itemsSelected + " instead of 0.");
+    // Simulate pressing the delete key
+    canvas.simulate('keydown', {keyCode: 46});
+    canvas.simulate('keyup', {keyCode: 46});
+    numChildren = window.frames[0].paper.project.activeLayer.children.length;
+    if (numChildren !== 0) { // Expect the number of children to be 0
+      throw new Error("Incorrect number of children in the project. Found " + numChildren + " but expected 0.");
     }
     done();
   });

@@ -369,20 +369,30 @@ function exportSVG() {
 // local filesystem. This skips making a round trip to the server
 // for a POST.
 function encodeAsImgAndLink(svg){
-  // Add some critical information
-  svg.setAttribute('version', '1.1');
-  svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+  if ($.browser.msie) {
+    // Add some critical information
+    svg.setAttribute('version', '1.1');
+    var dummy = document.createElement('div');
+    dummy.appendChild(svg);
+    window.winsvg = window.open('/static/html/export.html');
+    window.winsvg.document.write(dummy.innerHTML);
+    window.winsvg.document.body.style.margin = 0;
+  } else {
+    // Add some critical information
+    svg.setAttribute('version', '1.1');
+    svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
 
-  var dummy = document.createElement('div');
-  dummy.appendChild(svg);
+    var dummy = document.createElement('div');
+    dummy.appendChild(svg);
 
-  var b64 = Base64.encode(dummy.innerHTML);
+    var b64 = Base64.encode(dummy.innerHTML);
 
-  //window.winsvg = window.open("data:image/svg+xml;base64,\n"+b64);
-  var html = "<img style='height:100%;width:100%;' src='data:image/svg+xml;base64," + b64 + "' />"
-  window.winsvg = window.open();
-  window.winsvg.document.write(html);
-  window.winsvg.document.body.style.margin = 0;
+    //window.winsvg = window.open("data:image/svg+xml;base64,\n"+b64);
+    var html = "<img style='height:100%;width:100%;' src='data:image/svg+xml;base64," + b64 + "' />"
+    window.winsvg = window.open();
+    window.winsvg.document.write(html);
+    window.winsvg.document.body.style.margin = 0;
+  }
 }
 
 // Encodes png as a base64 text and opens a new browser window
@@ -392,9 +402,16 @@ function encodeAsImgAndLink(svg){
 function exportPNG() {
   var canvas = document.getElementById('myCanvas');
   var html = "<img src='" + canvas.toDataURL('image/png') + "' />"
-  window.winpng = window.open();
-  window.winpng.document.write(html);
-  window.winpng.document.body.style.margin = 0;
+  if ($.browser.msie) {
+    window.winpng = window.open('/static/html/export.html');
+    window.winpng.document.write(html);
+    window.winpng.document.body.style.margin = 0;
+  } else {
+    window.winpng = window.open();
+    window.winpng.document.write(html);
+    window.winpng.document.body.style.margin = 0;
+  }
+  
 }
 
 

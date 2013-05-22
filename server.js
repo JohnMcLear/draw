@@ -407,7 +407,8 @@ function moveItemsProgress(room, artist, itemNames, delta) {
   if (project && project.activeLayer) {
     for (x in itemNames) {
       var itemName = itemNames[x];
-      if (project.activeLayer._namedChildren[itemName][0]) {
+      var namedChildren = project.activeLayer._namedChildren;
+      if (namedChildren && namedChildren[itemName] && namedChildren[itemName][0]) {
         project.activeLayer._namedChildren[itemName][0].position.x += delta[1];
         project.activeLayer._namedChildren[itemName][0].position.y += delta[2];
       }
@@ -423,7 +424,8 @@ function moveItemsEnd(room, artist, itemNames, delta) {
   if (project && project.activeLayer) {
     for (x in itemNames) {
       var itemName = itemNames[x];
-      if (project.activeLayer._namedChildren[itemName][0]) {
+      var namedChildren = project.activeLayer._namedChildren;
+      if (namedChildren && namedChildren[itemName] && namedChildren[itemName][0]) {
         project.activeLayer._namedChildren[itemName][0].position.x += delta[1];
         project.activeLayer._namedChildren[itemName][0].position.y += delta[2];
       }

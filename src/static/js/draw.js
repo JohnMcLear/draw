@@ -286,7 +286,24 @@ function onKeyUp(event) {
   }
 }
 
+// Drop image onto canvas to upload it
+$('#myCanvas').bind('dragover dragenter', function(e) {
+  e.preventDefault();
+});
 
+$('#myCanvas').bind('drop', function(e) {
+  e = e || window.event; // get window.event if e argument missing (in IE)
+  if (e.preventDefault) {  // stops the browser from redirecting off to the image.
+    e.preventDefault();
+  }
+  e = e.originalEvent;
+  var dt = e.dataTransfer;
+  var files = dt.files;
+  for (var i=0; i<files.length; i++) {
+    var file = files[i];
+    uploadImage(file);
+  }
+});
 
 
 
@@ -338,6 +355,10 @@ $('#drawTool').on('click', function() {
 $('#selectTool').on('click', function() {
   activeTool = "select";
   $('#myCanvas').css('cursor', 'default');
+});
+
+$('#uploadImage').on('click', function() {
+  $('#imageInput').click();
 });
 
 function clearCanvas() {
@@ -414,6 +435,31 @@ function exportPNG() {
   
 }
 
+// User selects an image from the file browser to upload
+$('#imageInput').bind('change', function(e) {
+  // Get selected files
+  var files = document.getElementById('imageInput').files;
+  for (var i=0; i<files.length; i++) {
+    var file = files[i];
+    uploadImage(file);
+  }
+});
+
+function uploadImage(file) {
+  var reader = new FileReader();
+
+  //attach event handler
+  reader.readAsDataURL(file);
+  $(reader).bind('loadend', function(e) {
+    var bin = this.result; 
+
+    //Add to paper project here
+    var raster = new Raster(bin);
+    raster.position = view.center;
+    raster.name = uid + ":" + (++paper_object_count);
+    socket.emit('image:add', room, uid, JSON.stringify(bin), raster.position, raster.name);
+  });
+}
 
 
 
@@ -486,6 +532,16 @@ socket.on('item:move', function(artist, itemNames, delta) {
         paper.project.activeLayer._namedChildren[itemName][0].position += new Point(delta[1], delta[2]);
       }
     }
+    view.draw();
+  }
+});
+
+socket.on('image:add', function(artist, data, position, name) {
+  if (artist != uid) {
+    var image = JSON.parse(data);
+    var raster = new Raster(image);
+    raster.position = new Point(position[1], position[2]);
+    raster.name = name;
     view.draw();
   }
 });

@@ -206,6 +206,11 @@ io.sockets.on('connection', function (socket) {
     moveItemsEnd(room, uid, itemNames, delta);
   });
   
+  // User adds a raster image
+  socket.on('image:add', function(room, uid, data, position, name) {
+    addImage(room, uid, data, position, name);
+  });
+  
 });
 
 var projects = {};
@@ -413,7 +418,9 @@ function moveItemsProgress(room, artist, itemNames, delta) {
         project.activeLayer._namedChildren[itemName][0].position.y += delta[2];
       }
     }
-    io.sockets.in(room).emit('item:move', artist, itemNames, delta);
+    if (itemNames) {
+      io.sockets.in(room).emit('item:move', artist, itemNames, delta);
+    }
   }
 }
 
@@ -433,6 +440,19 @@ function moveItemsEnd(room, artist, itemNames, delta) {
     if (itemNames) {
       io.sockets.in(room).emit('item:move', artist, itemNames, delta);
     }
+    writeProjectToDB(room);
+  }
+}
+
+// Add image to canvas
+function addImage(room, artist, data, position, name) {
+  var project = projects[room].project;
+  if (project && project.activeLayer) {
+    var image = JSON.parse(data);
+    var raster = new paper.Raster(image);
+    raster.position = new paper.Point(position[1], position[2]);
+    raster.name = name;
+    io.sockets.in(room).emit('image:add', artist, data, position, name);
     writeProjectToDB(room);
   }
 }

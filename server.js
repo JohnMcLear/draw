@@ -425,8 +425,8 @@ function clearCanvas(room) {
       }
     }
     // Remove all of the children from the active layer
-    if (paper.project.activeLayer && paper.project.activeLayer.hasChildren()) {
-      paper.project.activeLayer.removeChildren();
+    if (project && project.activeLayer && project.activeLayer.hasChildren()) {
+      project.activeLayer.removeChildren();
     }
     writeProjectToDB(room);
   }

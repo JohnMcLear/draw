@@ -1,6 +1,10 @@
 {
   "name": "etherdraw",
-  "description": "collaborative drawing",
+  "description": "Collaborative drawing and sketching in real time",
+  "repository" : { 
+    "type" : "git",
+    "url" : "http://github.com/JohnMcLear/draw.git"
+  },
   "version": "0.0.0-15",
   "engines": {
     "node": "0.6.x"

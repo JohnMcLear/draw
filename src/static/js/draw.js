@@ -360,9 +360,9 @@ $('#pickerSwatch').on('click', function() {
 });
 
 $("#opacityRange").on('click', function(e){
-  $("#opacityIdentifier").css({left:e.offsetX});
+  var offsetX = e.offsetX || e.originalEvent.layerX;
+  $("#opacityIdentifier").css({left:offsetX});
   var opacity = $("#opacityRange").width() - e.offsetX + 55; // get the opacity range value by removing the offset from the width
-  console.log(opacity);
   $("#opacityRangeVal").val(opacity);
   update_active_color();
 });
@@ -652,12 +652,11 @@ progress_external_path = function (points, artist) {
     // Starts the path
     var start_point = new Point(points.start[1], points.start[2]);
     var color = new RgbColor(points.rgba.red, points.rgba.green, points.rgba.blue, points.rgba.opacity);
-
     if(points.tool == "draw"){
-      path.fillColor = active_color_rgb;
+      path.fillColor = color;
     }
     else if(points.tool == "pencil"){
-      path.strokeColor = active_color_rgb;
+      path.strokeColor = color;
       path.strokeWidth = 2;
     }
 

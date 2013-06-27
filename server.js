@@ -70,7 +70,7 @@ app.get('/tests/frontend/specs_list.js', function(req, res){
     var files = results.coreSpecs; // push the core specs to a file object
     files = files.concat(results.pluginSpecs); // add the plugin Specs to the core specs
     //console.debug("Sent browser the following test specs:", files.sort());
-    console.log("Sent browser the following test specs:", files.sort());
+    // console.log("Sent browser the following test specs:", files.sort());
     res.send("var specs_list = " + JSON.stringify(files.sort()) + ";\n");
   });
 
@@ -378,7 +378,6 @@ progress_external_path = function (room, points, artist) {
     // Starts the path
     var start_point = new paper.Point(points.start[1], points.start[2]);
     var color = new paper.Color(points.rgba.red, points.rgba.green, points.rgba.blue, points.rgba.opacity);
-
     if(points.tool == "draw"){
       path.fillColor = color;
     } 
@@ -409,7 +408,6 @@ progress_external_path = function (room, points, artist) {
 function writeProjectToDB(room) {
   var project = projects[room].project;
   var json = project.exportJSON();
-  console.log("wrote", json);
   db.init(function (err) {
     if(err) {
       console.error(err);

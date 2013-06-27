@@ -378,7 +378,14 @@ progress_external_path = function (room, points, artist) {
     // Starts the path
     var start_point = new paper.Point(points.start[1], points.start[2]);
     var color = new paper.Color(points.rgba.red, points.rgba.green, points.rgba.blue, points.rgba.opacity);
-    path.fillColor = color;
+
+    if(points.tool == "draw"){
+      path.fillColor = color;
+    } 
+    else if (points.tool == "pencil"){
+      path.strokeColor = color;
+      path.strokeWidth = 2;
+    }
     path.name = points.name;
     path.add(start_point);
 
@@ -402,6 +409,7 @@ progress_external_path = function (room, points, artist) {
 function writeProjectToDB(room) {
   var project = projects[room].project;
   var json = project.exportJSON();
+  console.log("wrote", json);
   db.init(function (err) {
     if(err) {
       console.error(err);

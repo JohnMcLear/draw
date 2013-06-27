@@ -135,10 +135,16 @@ function onMouseDown(event) {
     }
   }, 100);
   
-  if (activeTool == "draw") {
+  if (activeTool == "draw" || activeTool == "pencil") {
     var point = event.point;
     path = new Path();
-    path.fillColor = active_color_rgb;
+    if(activeTool == "draw"){
+      path.fillColor = active_color_rgb;
+    }
+    else if(activeTool == "pencil"){
+      path.strokeColor = active_color_rgb;
+      path.strokeWidth = 2;
+    }
     path.add(event.point);
     path.name = uid + ":" + (++paper_object_count);
     view.draw();
@@ -148,7 +154,8 @@ function onMouseDown(event) {
       name: path.name,
       rgba: active_color_json,
       start: event.point,
-      path: []
+      path: [],
+      tool: activeTool
     };
   } else if (activeTool == "select") {
     // Select item
@@ -180,13 +187,16 @@ function onMouseDrag(event) {
     return;
   }
 
-  if (activeTool == "draw") {
+  if (activeTool == "draw" || activeTool == "pencil") {
     var step = event.delta / 2;
     step.angle += 90;
-
-    var top = event.middlePoint + step;
-    var bottom = event.middlePoint - step;
-
+    if(activeTool == "draw"){
+      var top = event.middlePoint + step;
+      var bottom = event.middlePoint - step;
+    }else if (activeTool == "pencil"){
+      var top = event.middlePoint;
+      bottom = event.middlePoint;
+    }
     path.add(top);
     path.insert(0, bottom);
     path.smooth();
@@ -255,7 +265,7 @@ function onMouseUp(event) {
   }
   clearInterval(mouseHeld);
 
-  if (activeTool == "draw") {
+  if (activeTool == "draw" || activeTool == "pencil") {
     // Close the users path
     path.add(event.point);
     path.closed = true;
@@ -541,6 +551,7 @@ socket.on('user:disconnect', function (user_count) {
 });
 
 socket.on('project:load', function (json) {
+  console.log(json.project);
   paper.project.activeLayer.remove();
   paper.project.importJSON(json.project);
   view.draw();
@@ -641,7 +652,15 @@ progress_external_path = function (points, artist) {
     // Starts the path
     var start_point = new Point(points.start[1], points.start[2]);
     var color = new RgbColor(points.rgba.red, points.rgba.green, points.rgba.blue, points.rgba.opacity);
-    path.fillColor = color;
+
+    if(points.tool == "draw"){
+      path.fillColor = active_color_rgb;
+    }
+    else if(points.tool == "pencil"){
+      path.strokeColor = active_color_rgb;
+      path.strokeWidth = 2;
+    }
+
     path.name = points.name;
     path.add(start_point);
 

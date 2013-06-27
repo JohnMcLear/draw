@@ -1,0 +1,28 @@
+<!doctype html>
+<html>
+    <head>
+        <title>Frontend tests</title>
+        <meta charset="utf-8">
+        <link rel="shortcut icon" href="/static/img/favicon.ico">
+        <link rel="stylesheet" href="css/runner.css" />
+        <script>document.domain = document.domain;</script>
+        <script src="/static/js/lib/jquery.js"></script>
+        <script src="/static/js/lib/jquery_browser.js"></script>
+        <script src="/static/js/lib/webtoolkit.base64.js"></script>
+        <script src="js/lib/underscore.js"></script>
+        <script src="js/lib/mocha.js"></script>
+        <script> mocha.setup('bdd') </script>
+        <script src="js/lib/expect.js"></script>
+        <script src="js/lib/sendkeys.js"></script>
+        <script src="js/lib/jquery.simulate.js"></script>
+        <script src="js/lib/jquery.iframe.js"></script>  
+        <script src="js/helper.js"></script>
+        <script src="specs_list.js"></script>
+        <script src="js/runner.js"></script>
+    </head>
+    <body>
+        <div id="console"></div>
+        <div id="mocha"></div>
+        <div id="iframe-container"></div>
+    </body>
+</html>

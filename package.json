@@ -12,6 +12,7 @@
   "dependencies": {
     "express": "*",
     "socket.io": "*",
+    "async": "*",
     "ueberDB": "*",
     "canvas": "*",
     "paper": "*"

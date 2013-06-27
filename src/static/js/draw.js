@@ -20,7 +20,12 @@ function hexToRgb(hex) {
 
 
 $(document).ready(function() {
-  $('#colorpicker').farbtastic(pickColor);
+  $('#colorpicker').farbtastic(pickColor); // make a color picker
+  $('#mycolorpicker').pep({disableSelect:false, constrainToParent:"body"});
+  var drawurl = window.location.href.split("?")[0]; // get the drawing url
+  $('#embedinput').val("<iframe name='embed_readwrite' src='" + drawurl + "?showControls=true&showChat=true&showLineNumbers=true&useMonospaceFont=false' width=600 height=400></iframe>"); // write it to the embed input
+  $('#linkinput').val(drawurl); // and the share/link input
+  $('#drawTool > a').css({background:"#eee"}); // set the drawtool css to show it as active
 });
 
 $('#activeColorSwatch').css('background-color', $('.colorSwatch.active').css('background-color'));
@@ -62,7 +67,7 @@ var path_to_send = {};
 // Calculates colors
 var active_color_rgb;
 var active_color_json = {};
-var $opacity = $('#opacity');
+var $opacity = $('#opacityRangeVal');
 var update_active_color = function () {
   var rgb_array = $('#activeColorSwatch').css('background-color');
   while(rgb_array.indexOf(" ") > -1) {
@@ -109,14 +114,37 @@ var send_paths_timer;
 var timer_is_active = false;
 var paper_object_count = 0;
 var activeTool = "draw";
+var mouseTimer = 0; // used for getting if the mouse is being held down but not dragged IE when bringin up color picker
+var mouseHeld; // global timer for if mouse is held.
 
 function onMouseDown(event) {
+  $('.popup').fadeOut();
 
-  if (activeTool == "draw") {
+  // Ignore middle or right mouse button clicks for now
+  if (event.event.button == 1 || event.event.button == 2) {
+    return;
+  }
+
+  mouseTimer = 0;
+  mouseHeld = setInterval(function(){ // is the mouse being held and not dragged?
+    mouseTimer++;
+    if(mouseTimer > 5){
+      mouseTimer = 0;
+      $('#mycolorpicker').toggle(); // show the color picker
+      $('#mycolorpicker').css({"left":event.event.pageX - 250, "top":event.event.pageY - 100}); // make it in the smae position
+    }
+  }, 100);
+  
+  if (activeTool == "draw" || activeTool == "pencil") {
     var point = event.point;
-
     path = new Path();
-    path.fillColor = active_color_rgb;
+    if(activeTool == "draw"){
+      path.fillColor = active_color_rgb;
+    }
+    else if(activeTool == "pencil"){
+      path.strokeColor = active_color_rgb;
+      path.strokeWidth = 2;
+    }
     path.add(event.point);
     path.name = uid + ":" + (++paper_object_count);
     view.draw();
@@ -126,10 +154,12 @@ function onMouseDown(event) {
       name: path.name,
       rgba: active_color_json,
       start: event.point,
-      path: []
+      path: [],
+      tool: activeTool
     };
   } else if (activeTool == "select") {
     // Select item
+    $("#myCanvas").css("cursor","pointer");
     if (event.item) {
       // If holding shift key down, don't clear selection - allows multiple selections
       if (!event.event.shiftKey) {
@@ -149,13 +179,24 @@ var item_move_timer_is_active = false;
 
 function onMouseDrag(event) {
 
-  if (activeTool == "draw") {
+  mouseTimer = 0;
+  clearInterval(mouseHeld);
+
+  // Ignore middle or right mouse button clicks for now
+  if (event.event.button == 1 || event.event.button == 2) {
+    return;
+  }
+
+  if (activeTool == "draw" || activeTool == "pencil") {
     var step = event.delta / 2;
     step.angle += 90;
-
-    var top = event.middlePoint + step;
-    var bottom = event.middlePoint - step;
-
+    if(activeTool == "draw"){
+      var top = event.middlePoint + step;
+      var bottom = event.middlePoint - step;
+    }else if (activeTool == "pencil"){
+      var top = event.middlePoint;
+      bottom = event.middlePoint;
+    }
     path.add(top);
     path.insert(0, bottom);
     path.smooth();
@@ -218,7 +259,13 @@ function onMouseDrag(event) {
 
 function onMouseUp(event) {
 
-  if (activeTool == "draw") {
+  // Ignore middle or right mouse button clicks for now
+  if (event.event.button == 1 || event.event.button == 2) {
+    return;
+  }
+  clearInterval(mouseHeld);
+
+  if (activeTool == "draw" || activeTool == "pencil") {
     // Close the users path
     path.add(event.point);
     path.closed = true;
@@ -227,6 +274,9 @@ function onMouseUp(event) {
 
     // Send the path to other users
     path_to_send.end = event.point;
+    // This covers the case where paths are created in less than 100 seconds
+    // it does add a duplicate segment, but that is okay for now.
+    socket.emit('draw:progress', room, uid, JSON.stringify(path_to_send));
     socket.emit('draw:end', room, uid, JSON.stringify(path_to_send));
 
     // Stop new path data being added & sent
@@ -268,7 +318,24 @@ function onKeyUp(event) {
   }
 }
 
+// Drop image onto canvas to upload it
+$('#myCanvas').bind('dragover dragenter', function(e) {
+  e.preventDefault();
+});
 
+$('#myCanvas').bind('drop', function(e) {
+  e = e || window.event; // get window.event if e argument missing (in IE)
+  if (e.preventDefault) {  // stops the browser from redirecting off to the image.
+    e.preventDefault();
+  }
+  e = e.originalEvent;
+  var dt = e.dataTransfer;
+  var files = dt.files;
+  for (var i=0; i<files.length; i++) {
+    var file = files[i];
+    uploadImage(file);
+  }
+});
 
 
 
@@ -292,34 +359,60 @@ $('#pickerSwatch').on('click', function() {
   $('#myColorPicker').fadeToggle();
 });
 
-$opacity.on('change', function () {
-
+$("#opacityRange").on('click', function(e){
+  var offsetX = e.offsetX || e.originalEvent.layerX;
+  $("#opacityIdentifier").css({left:offsetX});
+  var opacity = $("#opacityRange").width() - e.offsetX + 55; // get the opacity range value by removing the offset from the width
+  $("#opacityRangeVal").val(opacity);
   update_active_color();
-
 });
 
+$('#settingslink').on('click', function() {
+  $('#settings').fadeToggle();
+});
+$('#embedlink').on('click', function() {
+  $('#embed').fadeToggle();
+});
+$('#importExport').on('click', function() {
+  $('#importexport').fadeToggle();
+});
+$('#usericon').on('click', function() {
+  $('#mycolorpicker').fadeToggle();
+});
 $('#clearCanvas').on('click', function() {
   clearCanvas();
   socket.emit('canvas:clear', room);
 });
-
 $('#exportSVG').on('click', function() {
   exportSVG();
 });
-
 $('#exportPNG').on('click', function() {
   exportPNG();
 });
 
+$('#pencilTool').on('click', function() {
+  $('#editbar > ul > li > a').css({background:""}); // remove the backgrounds from other buttons
+  $('#pencilTool > a').css({background:"#eee"}); // set the selecttool css to show it as active
+  activeTool = "pencil";
+  $('#myCanvas').css('cursor', 'pointer');
+  paper.project.activeLayer.selected = false;
+});
 $('#drawTool').on('click', function() {
+  $('#editbar > ul > li > a').css({background:""}); // remove the backgrounds from other buttons
+  $('#drawTool > a').css({background:"#eee"}); // set the selecttool css to show it as active
   activeTool = "draw";
   $('#myCanvas').css('cursor', 'pointer');
   paper.project.activeLayer.selected = false;
 });
-
 $('#selectTool').on('click', function() {
+  $('#editbar > ul > li > a').css({background:""}); // remove the backgrounds from other buttons
+  $('#selectTool > a').css({background:"#eee"}); // set the selecttool css to show it as active
   activeTool = "select";
   $('#myCanvas').css('cursor', 'default');
+});
+
+$('#uploadImage').on('click', function() {
+  $('#imageInput').click();
 });
 
 function clearCanvas() {
@@ -351,23 +444,77 @@ function exportSVG() {
 // local filesystem. This skips making a round trip to the server
 // for a POST.
 function encodeAsImgAndLink(svg){
-  // Add some critical information
-  svg.setAttribute('version', '1.1');
-  svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+  if ($.browser.msie) {
+    // Add some critical information
+    svg.setAttribute('version', '1.1');
+    var dummy = document.createElement('div');
+    dummy.appendChild(svg);
+    window.winsvg = window.open('/static/html/export.html');
+    window.winsvg.document.write(dummy.innerHTML);
+    window.winsvg.document.body.style.margin = 0;
+  } else {
+    // Add some critical information
+    svg.setAttribute('version', '1.1');
+    svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+    svg.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
 
-  var dummy = document.createElement('div');
-  dummy.appendChild(svg);
+    var dummy = document.createElement('div');
+    dummy.appendChild(svg);
 
-  var b64 = Base64.encode(dummy.innerHTML);
+    var b64 = Base64.encode(dummy.innerHTML);
 
-  window.open("data:image/svg+xml;base64,\n"+b64);
+    //window.winsvg = window.open("data:image/svg+xml;base64,\n"+b64);
+    var html = "<img style='height:100%;width:100%;' src='data:image/svg+xml;base64," + b64 + "' />"
+    window.winsvg = window.open();
+    window.winsvg.document.write(html);
+    window.winsvg.document.body.style.margin = 0;
+  }
 }
 
+// Encodes png as a base64 text and opens a new browser window
+// to the png image that can be saved as a .png on the users
+// local filesystem. This skips making a round trip to the server
+// for a POST.
 function exportPNG() {
   var canvas = document.getElementById('myCanvas');
-  window.open(canvas.toDataURL('image/png'));
+  var html = "<img src='" + canvas.toDataURL('image/png') + "' />"
+  if ($.browser.msie) {
+    window.winpng = window.open('/static/html/export.html');
+    window.winpng.document.write(html);
+    window.winpng.document.body.style.margin = 0;
+  } else {
+    window.winpng = window.open();
+    window.winpng.document.write(html);
+    window.winpng.document.body.style.margin = 0;
+  }
+  
 }
 
+// User selects an image from the file browser to upload
+$('#imageInput').bind('change', function(e) {
+  // Get selected files
+  var files = document.getElementById('imageInput').files;
+  for (var i=0; i<files.length; i++) {
+    var file = files[i];
+    uploadImage(file);
+  }
+});
+
+function uploadImage(file) {
+  var reader = new FileReader();
+
+  //attach event handler
+  reader.readAsDataURL(file);
+  $(reader).bind('loadend', function(e) {
+    var bin = this.result; 
+
+    //Add to paper project here
+    var raster = new Raster(bin);
+    raster.position = view.center;
+    raster.name = uid + ":" + (++paper_object_count);
+    socket.emit('image:add', room, uid, JSON.stringify(bin), raster.position, raster.name);
+  });
+}
 
 
 
@@ -404,6 +551,7 @@ socket.on('user:disconnect', function (user_count) {
 });
 
 socket.on('project:load', function (json) {
+  console.log(json.project);
   paper.project.activeLayer.remove();
   paper.project.importJSON(json.project);
   view.draw();
@@ -444,22 +592,27 @@ socket.on('item:move', function(artist, itemNames, delta) {
   }
 });
 
+socket.on('image:add', function(artist, data, position, name) {
+  if (artist != uid) {
+    var image = JSON.parse(data);
+    var raster = new Raster(image);
+    raster.position = new Point(position[1], position[2]);
+    raster.name = name;
+    view.draw();
+  }
+});
+
 
 // --------------------------------- 
 // SOCKET.IO EVENT FUNCTIONS
 
 
 // Updates the active connections
-var $user_count = $('#userCount');
-var $user_count_wrapper = $('#userCountWrapper');
+var $user_count = $('#online_count');
 
 function update_user_count(count) {
-
-  $user_count_wrapper.css('opacity', 1);
-  $user_count.text((count === 1) ? " just you, why not invite some friends?" : " " + count);
-
+  $user_count.text((count === 1) ? "1" : " " + count);
 }
-
 
 var external_paths = {};
 
@@ -499,7 +652,14 @@ progress_external_path = function (points, artist) {
     // Starts the path
     var start_point = new Point(points.start[1], points.start[2]);
     var color = new RgbColor(points.rgba.red, points.rgba.green, points.rgba.blue, points.rgba.opacity);
-    path.fillColor = color;
+    if(points.tool == "draw"){
+      path.fillColor = color;
+    }
+    else if(points.tool == "pencil"){
+      path.strokeColor = color;
+      path.strokeWidth = 2;
+    }
+
     path.name = points.name;
     path.add(start_point);
 

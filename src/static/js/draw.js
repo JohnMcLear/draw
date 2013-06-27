@@ -20,7 +20,12 @@ function hexToRgb(hex) {
 
 
 $(document).ready(function() {
-  $('#colorpicker').farbtastic(pickColor);
+  $('#colorpicker').farbtastic(pickColor); // make a color picker
+  $('#mycolorpicker').pep({disableSelect:false, constrainToParent:"body"});
+  var drawurl = window.location.href.split("?")[0]; // get the drawing url
+  $('#embedinput').val("<iframe name='embed_readwrite' src='" + drawurl + "?showControls=true&showChat=true&showLineNumbers=true&useMonospaceFont=false' width=600 height=400></iframe>"); // write it to the embed input
+  $('#linkinput').val(drawurl); // and the share/link input
+  $('#drawTool > a').css({background:"#eee"}); // set the drawtool css to show it as active
 });
 
 $('#activeColorSwatch').css('background-color', $('.colorSwatch.active').css('background-color'));
@@ -62,7 +67,7 @@ var path_to_send = {};
 // Calculates colors
 var active_color_rgb;
 var active_color_json = {};
-var $opacity = $('#opacity');
+var $opacity = $('#opacityRangeVal');
 var update_active_color = function () {
   var rgb_array = $('#activeColorSwatch').css('background-color');
   while(rgb_array.indexOf(" ") > -1) {
@@ -109,17 +114,29 @@ var send_paths_timer;
 var timer_is_active = false;
 var paper_object_count = 0;
 var activeTool = "draw";
+var mouseTimer = 0; // used for getting if the mouse is being held down but not dragged IE when bringin up color picker
+var mouseHeld; // global timer for if mouse is held.
 
 function onMouseDown(event) {
+  $('.popup').fadeOut();
 
   // Ignore middle or right mouse button clicks for now
   if (event.event.button == 1 || event.event.button == 2) {
     return;
   }
+
+  mouseTimer = 0;
+  mouseHeld = setInterval(function(){ // is the mouse being held and not dragged?
+    mouseTimer++;
+    if(mouseTimer > 5){
+      mouseTimer = 0;
+      $('#mycolorpicker').toggle(); // show the color picker
+      $('#mycolorpicker').css({"left":event.event.pageX - 250, "top":event.event.pageY - 100}); // make it in the smae position
+    }
+  }, 100);
   
   if (activeTool == "draw") {
     var point = event.point;
-
     path = new Path();
     path.fillColor = active_color_rgb;
     path.add(event.point);
@@ -135,6 +152,7 @@ function onMouseDown(event) {
     };
   } else if (activeTool == "select") {
     // Select item
+    $("#myCanvas").css("cursor","pointer");
     if (event.item) {
       // If holding shift key down, don't clear selection - allows multiple selections
       if (!event.event.shiftKey) {
@@ -153,6 +171,9 @@ var send_item_move_timer;
 var item_move_timer_is_active = false;
 
 function onMouseDrag(event) {
+
+  mouseTimer = 0;
+  clearInterval(mouseHeld);
 
   // Ignore middle or right mouse button clicks for now
   if (event.event.button == 1 || event.event.button == 2) {
@@ -232,6 +253,7 @@ function onMouseUp(event) {
   if (event.event.button == 1 || event.event.button == 2) {
     return;
   }
+  clearInterval(mouseHeld);
 
   if (activeTool == "draw") {
     // Close the users path
@@ -327,32 +349,54 @@ $('#pickerSwatch').on('click', function() {
   $('#myColorPicker').fadeToggle();
 });
 
-$opacity.on('change', function () {
-
+$("#opacityRange").on('click', function(e){
+  $("#opacityIdentifier").css({left:e.offsetX});
+  var opacity = $("#opacityRange").width() - e.offsetX + 55; // get the opacity range value by removing the offset from the width
+  console.log(opacity);
+  $("#opacityRangeVal").val(opacity);
   update_active_color();
-
 });
 
+$('#settingslink').on('click', function() {
+  $('#settings').fadeToggle();
+});
+$('#embedlink').on('click', function() {
+  $('#embed').fadeToggle();
+});
+$('#importExport').on('click', function() {
+  $('#importexport').fadeToggle();
+});
+$('#usericon').on('click', function() {
+  $('#mycolorpicker').fadeToggle();
+});
 $('#clearCanvas').on('click', function() {
   clearCanvas();
   socket.emit('canvas:clear', room);
 });
-
 $('#exportSVG').on('click', function() {
   exportSVG();
 });
-
 $('#exportPNG').on('click', function() {
   exportPNG();
 });
 
+$('#pencilTool').on('click', function() {
+  $('#editbar > ul > li > a').css({background:""}); // remove the backgrounds from other buttons
+  $('#pencilTool > a').css({background:"#eee"}); // set the selecttool css to show it as active
+  activeTool = "pencil";
+  $('#myCanvas').css('cursor', 'pointer');
+  paper.project.activeLayer.selected = false;
+});
 $('#drawTool').on('click', function() {
+  $('#editbar > ul > li > a').css({background:""}); // remove the backgrounds from other buttons
+  $('#drawTool > a').css({background:"#eee"}); // set the selecttool css to show it as active
   activeTool = "draw";
   $('#myCanvas').css('cursor', 'pointer');
   paper.project.activeLayer.selected = false;
 });
-
 $('#selectTool').on('click', function() {
+  $('#editbar > ul > li > a').css({background:""}); // remove the backgrounds from other buttons
+  $('#selectTool > a').css({background:"#eee"}); // set the selecttool css to show it as active
   activeTool = "select";
   $('#myCanvas').css('cursor', 'default');
 });
@@ -553,16 +597,11 @@ socket.on('image:add', function(artist, data, position, name) {
 
 
 // Updates the active connections
-var $user_count = $('#userCount');
-var $user_count_wrapper = $('#userCountWrapper');
+var $user_count = $('#online_count');
 
 function update_user_count(count) {
-
-  $user_count_wrapper.css('opacity', 1);
-  $user_count.text((count === 1) ? " just you, why not invite some friends?" : " " + count);
-
+  $user_count.text((count === 1) ? "1" : " " + count);
 }
-
 
 var external_paths = {};
 

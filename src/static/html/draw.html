@@ -37,46 +37,138 @@
         <script src='/static/js/lib/paper.js'></script>
         <script src='/static/js/lib/webtoolkit.base64.js'></script>
         <script src='/static/js/lib/farbtastic.js'></script>
+	<script src='/static/js/lib/jquery.pep.min.js'></script>
         <script src='/static/js/draw.js' type="text/paperscript" canvas="myCanvas"></script>
         <script>document.domain = document.domain;</script>
     </head>
     <body>
+
+        <div id="editbar" class="toolbar">
+            <div id="overlay">
+                <div id="overlay-inner"></div>
+            </div>
+            <ul class="menu_left">
+                <!-- paint brush -->
+                <li class="acl-write" id="drawTool" data-key="bold">
+                    <a class="grouped-left" data-l10n-id="draw.toolbar.bold.title">
+                      <span class="buttonicon buttonicon-bold"></span>
+                    </a>
+                </li>
+		<!-- pencil brush -->
+<!--
+                <li class="acl-write" id="paintTool" data-key="italic">
+                    <a class="grouped-middle" data-l10n-id="draw.toolbar.italic.title">
+                      <span class="buttonicon buttonicon-italic"></span>
+                    </a>
+                </li>
+-->
+		<!-- Select Tool -->
+                <li class="acl-write" id="selectTool" data-key="underline">
+                    <a class="grouped-middle" data-l10n-id="draw.toolbar.underline.title">
+                      <span class="buttonicon buttonicon-underline"></span>
+                    </a>
+                </li>
+		<!-- Upload -->
+                <li class="acl-write" id="uploadImage" data-key="strikethrough">
+                    <a class="grouped-right" data-l10n-id="draw.toolbar.strikethrough.title">
+                      <span class="buttonicon buttonicon-strikethrough"></span>
+                    </a>
+                </li>
+            </ul>
+            <ul class="menu_right">
+
+                <!-- settings -->
+                <li data-key="settings">
+                    <a id="settingslink" class="grouped-left" data-l10n-id="draw.toolbar.settings.title">
+                        <span class="grouped-left buttonicon buttonicon-settings"></span>
+                    </a>
+                </li>
+                <!-- import export -->
+                <li data-key="import_export">
+                    <a id="importExport" class="grouped-middle" data-l10n-id="draw.toolbar.import_export.title">
+                        <span class="buttonicon buttonicon-import_export"></span>
+                    </a>
+                </li>
+		<!-- share & embed -->
+                <li data-key="embed">
+                    <a id="embedlink" class="grouped-right" data-l10n-id="draw.toolbar.embed.title">
+                        <span class="buttonicon buttonicon-embed"></span>
+                    </a>
+                </li>
+
+		<!-- user stuff -->
+                <li class="separator"></li>
+                <li id="usericon" data-key="showusers">
+                    <a data-l10n-id="draw.toolbar.showusers.title">
+                        <span class="buttonicon buttonicon-showusers"></span>
+                        <span id="online_count">1</span>
+                    </a>
+                </li>
+                
+            </ul>
+        </div>
+   
+
+        <div id="settings" class="popup">
+            <h1 data-l10n-id="draw.settings.padSettings"></h1>
+            <div class="column">
+                <h2 data-l10n-id="draw.settings.ClearCanvas">Clear Canvas</h2>
+		<a>Warning - This will clear the canvas</a><button id="clearCanvas">Okay, Clear it!</button>
+	    </div>
+        </div>
+	<div id="embed" class="popup">
+            <h1 data-l10n-id="draw.share">Share & Embed</h1>
+            <div id="linkcode">
+                <h2 data-l10n-id="draw.share.link">Share</h2>
+                <input id="linkinput" type="text" value="">
+            </div>
+            <br>
+            <div id="embedcode">
+                <h2 data-l10n-id="draw.share.emebdcode">Embed</h2>
+                <input id="embedinput" type="text" value="">
+            </div>
+            
+        </div>
+        <div id="settings" class="popup">
+            <h1 data-l10n-id="draw.settings.padSettings">Settings</h1>
+            <div class="column">
+
+                <h2 data-l10n-id="draw.settings.myView"></h2>
+            </div>
+        </div>
+	<div id="importexport" class="popup">
+            <h1 data-l10n-id="draw.importExport.import_export">Export</h1>
+            <div class="column">
+                <h2 data-l10n-id="draw.importExport.export"></h2>
+                <div><a id="exportSVG" target="_blank" class="exportlink">Export SVG</a></div>
+                <div><a id="exportPNG" target="_blank" class="exportlink">Export PNG</a></div>
+            </div>
+        </div>
+
+
+
     <div id="lostConnection" class="hidden">
-	    <p>Lost connection to the server! Please refresh this page.</p>
+        <p>Lost connection to the server! Please refresh this page.</p>
     </div>
     <div id="loading" class="hidden" style="display:block;">
-        <p>Loading existing sketch...</p>
+        <p>Loading existing sketch...  Click and hold to access the colour wheel</p>
     </div>
-    <div id="controls">
-        <div id="userCountWrapper" style="opacity:0"> artists:
-            <span id="userCount"></span>
-        </div>
-        <div id="activeColorSwatch"></div>
-        <div data-color="47,47,47" class="colorSwatch" style="background:rgb(37,37,37);"></div>
-        <div data-color="109,73,37" class="colorSwatch active" style="background:rgb(109,73,37);"></div>
-        <div data-color="233,34,41" class="colorSwatch" style="background:rgb(233,34,41);"></div>
-        <div data-color="57,178,73" class="colorSwatch" style="background:rgb(57,178,73);"></div>
-        <div data-color="247,219,31" class="colorSwatch" style="background:rgb(247,219,31);"></div>
-        <div data-color="248,172,60" class="colorSwatch" style="background:rgb(248,172,60);"></div>
-        <div data-color="142,42,140" class="colorSwatch" style="background:rgb(142,42,140);"></div>
-        <div data-color="77,42,255" class="colorSwatch" style="background:rgb(77,42,255);"></div>
-        <div data-color="255,255,255" class="colorSwatch" style="background:rgb(255,255,255);"></div>
-        <div id="pickerSwatch" class="colorSwatch"></div>
-        <label>Opacity
-            <input type="range" min="0" max="255" value="200" id="opacity">
-        </label>
-        <button id="clearCanvas">Clear</button>
-        <button id="exportSVG">Export SVG</button>
-        <button id="exportPNG">Export PNG</button>
-        <button id="drawTool">Draw Tool</button>
-        <button id="selectTool">Select Tool</button>
-        <button id="uploadImage">Upload Image</button>
-        <input type="file" id="imageInput" accept="image/*" style="display:none;" />
-        <div id="myColorPicker">
-            <form><input type="text" id="color" name="color" value="#123456" /></form>
-            <div id="colorpicker"></div>
-        </div>
+
+    <input type="file" id="imageInput" accept="image/*" />
+    <div id="activeColorSwatch"></div>
+   
+    <div id="mycolorpicker">
+      <div id="colorpickerMover"></div>
+      <div id="colorpicker"></div>
+      <div id="opacity">
+        <div id="opacityLabel">Opacity</div>
+        <div id="opacityRange"></div>
+        <div id="opacityIdentifier"></div>
+        <input type="range" min="0" max="255" value="200" id="opacityRangeVal">
+      </div>
     </div>
+
+
     <canvas id="myCanvas" resize="true"></canvas>
     </body>
 </html>

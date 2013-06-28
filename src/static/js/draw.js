@@ -70,6 +70,8 @@ var active_color_json = {};
 var $opacity = $('#opacityRangeVal');
 var update_active_color = function () {
   var rgb_array = $('#activeColorSwatch').css('background-color');
+  $('#editbar').css("border-bottom", "solid 2px " + rgb_array);
+
   while(rgb_array.indexOf(" ") > -1) {
     rgb_array = rgb_array.replace(" ", "");
   }
@@ -89,7 +91,6 @@ var update_active_color = function () {
     "blue": blue,
     "opacity": opacity
   };
-
 };
 
 // Get the active color from the UI eleements

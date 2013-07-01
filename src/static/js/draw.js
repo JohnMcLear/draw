@@ -20,8 +20,6 @@ function hexToRgb(hex) {
 
 
 $(document).ready(function() {
-  $('#colorpicker').farbtastic(pickColor); // make a color picker
-  $('#mycolorpicker').pep({disableSelect:false, constrainToParent:"body"});
   var drawurl = window.location.href.split("?")[0]; // get the drawing url
   $('#embedinput').val("<iframe name='embed_readwrite' src='" + drawurl + "?showControls=true&showChat=true&showLineNumbers=true&useMonospaceFont=false' width=600 height=400></iframe>"); // write it to the embed input
   $('#linkinput').val(drawurl); // and the share/link input
@@ -70,6 +68,8 @@ var active_color_json = {};
 var $opacity = $('#opacityRangeVal');
 var update_active_color = function () {
   var rgb_array = $('#activeColorSwatch').css('background-color');
+  $('#editbar').css("border-bottom", "solid 2px " + rgb_array);
+
   while(rgb_array.indexOf(" ") > -1) {
     rgb_array = rgb_array.replace(" ", "");
   }
@@ -89,7 +89,6 @@ var update_active_color = function () {
     "blue": blue,
     "opacity": opacity
   };
-
 };
 
 // Get the active color from the UI eleements
@@ -554,6 +553,8 @@ socket.on('project:load', function (json) {
   console.log(json.project);
   paper.project.activeLayer.remove();
   paper.project.importJSON(json.project);
+  $('#colorpicker').farbtastic(pickColor); // make a color picker
+  $('#mycolorpicker').pep({disableSelect:false, constrainToParent:"body"});
   view.draw();
 });
 

@@ -8,7 +8,8 @@ describe("Delete items", function() {
       center1,
       center2,
       center3,
-      reloaded = false;
+      reloaded = false,
+      MENUBAR_HEIGHT = 36; // menubar is 36 pixels
 
   it("creates a pad", function(done) {
     padName = helper.newPad(done);
@@ -129,8 +130,10 @@ describe("Delete items", function() {
     var chrome$ = helper.padChrome$;
     var canvas = chrome$("#myCanvas");
     // Simulate clicking path3
-    canvas.simulate('mousedown', {clientX: center3.x, clientY: center3.y});
-    canvas.simulate('mouseup', {clientX: center3.x, clientY: center3.y});
+    var xclick = center3.x;
+    var yclick = center3.y + MENUBAR_HEIGHT;
+    canvas.simulate('mousedown', {clientX: xclick, clientY: yclick});
+    canvas.simulate('mouseup', {clientX: xclick, clientY: yclick});
 
     var itemsSelected = window.frames[0].paper.project.selectedItems.length;
     if (itemsSelected !== 1) { // Expect only one path to be selected
@@ -199,11 +202,15 @@ describe("Delete items", function() {
     var chrome$ = helper.padChrome$;
     var canvas = chrome$("#myCanvas");
     // Simulate clicking path1
-    canvas.simulate('mousedown', {clientX: center1.x, clientY: center1.y});
-    canvas.simulate('mouseup', {clientX: center1.x, clientY: center1.y});
+    var xclick = center1.x;
+    var yclick = center1.y + MENUBAR_HEIGHT;
+    canvas.simulate('mousedown', {clientX: xclick, clientY: yclick});
+    canvas.simulate('mouseup', {clientX: xclick, clientY: yclick});
     // Simulate clicking path2 while holding shift
-    canvas.simulate('mousedown', {clientX: center2.x, clientY: center2.y, shiftKey: true});
-    canvas.simulate('mouseup', {clientX: center2.x, clientY: center2.y, shiftKey: true});
+    xclick = center2.x;
+    yclick = center2.y + MENUBAR_HEIGHT;
+    canvas.simulate('mousedown', {clientX: xclick, clientY: yclick, shiftKey: true});
+    canvas.simulate('mouseup', {clientX: xclick, clientY: yclick, shiftKey: true});
 
     var itemsSelected = window.frames[0].paper.project.selectedItems.length;
     if (itemsSelected !== 2) { // Expect 2 paths to be selected

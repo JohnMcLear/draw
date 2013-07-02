@@ -14,7 +14,8 @@ describe("Move items", function() {
       newPosition1,
       newPosition2,
       newPosition3,
-      reloaded = false;
+      reloaded = false,
+      MENUBAR_HEIGHT = 36; // menubar is 36 pixels
 
   it("creates a pad", function(done) {
     padName = helper.newPad(done);
@@ -132,8 +133,10 @@ describe("Move items", function() {
     var chrome$ = helper.padChrome$;
     var canvas = chrome$("#myCanvas");
     // Simulate clicking path3
-    canvas.simulate('mousedown', {clientX: center3.x, clientY: center3.y});
-    canvas.simulate('mouseup', {clientX: center3.x, clientY: center3.y});
+    var xclick = center3.x;
+    var yclick = center3.y + MENUBAR_HEIGHT;
+    canvas.simulate('mousedown', {clientX: xclick, clientY: yclick});
+    canvas.simulate('mouseup', {clientX: xclick, clientY: yclick});
 
     var itemsSelected = window.frames[0].paper.project.selectedItems.length;
     if (itemsSelected !== 1) { // Expect only one path to be selected
@@ -167,7 +170,9 @@ describe("Move items", function() {
     oldPosition2 = window.frames[0].paper.project.activeLayer.children[1].position;
     oldPosition3 = window.frames[0].paper.project.activeLayer.children[2].position;
     // Simulate dragging on path 3
-    canvas.simulate('drag', {clientX: oldPosition3._x, clientY: oldPosition3._y, dx: 100, dy: 100});
+    var xclick = oldPosition3._x;
+    var yclick = oldPosition3._y + MENUBAR_HEIGHT;
+    canvas.simulate('drag', {clientX: xclick, clientY: yclick, dx: 100, dy: 100});
     newPosition1 = window.frames[0].paper.project.activeLayer.children[0].position;
     newPosition2 = window.frames[0].paper.project.activeLayer.children[1].position;
     newPosition3 = window.frames[0].paper.project.activeLayer.children[2].position;
@@ -256,11 +261,15 @@ describe("Move items", function() {
     // Simulate clicking path1
     center1 = window.frames[0].paper.project.activeLayer.children[0].position;
     center2 = window.frames[0].paper.project.activeLayer.children[1].position;
-    canvas.simulate('mousedown', {clientX: center1.x, clientY: center1.y});
-    canvas.simulate('mouseup', {clientX: center1.x, clientY: center1.y});
+    var xclick = center1.x;
+    var yclick = center1.y + MENUBAR_HEIGHT;
+    canvas.simulate('mousedown', {clientX: xclick, clientY: yclick});
+    canvas.simulate('mouseup', {clientX: xclick, clientY: yclick});
     // Simulate clicking path2 while holding shift
-    canvas.simulate('mousedown', {clientX: center2.x, clientY: center2.y, shiftKey: true});
-    canvas.simulate('mouseup', {clientX: center2.x, clientY: center2.y, shiftKey: true});
+    xclick = center2.x;
+    yclick = center2.y + MENUBAR_HEIGHT;
+    canvas.simulate('mousedown', {clientX: xclick, clientY: yclick, shiftKey: true});
+    canvas.simulate('mouseup', {clientX: xclick, clientY: yclick, shiftKey: true});
 
     var itemsSelected = window.frames[0].paper.project.selectedItems.length;
     if (itemsSelected !== 2) { // Expect 2 paths to be selected
@@ -291,7 +300,9 @@ describe("Move items", function() {
     oldPosition2 = window.frames[0].paper.project.activeLayer.children[1].position;
     oldPosition3 = window.frames[0].paper.project.activeLayer.children[2].position;
     // Simulate dragging on path 1 & 2
-    canvas.simulate('drag', {clientX: oldPosition2._x, clientY: oldPosition2._y, dx: -100, dy: -100, shiftKey: true});
+    var xclick = oldPosition2._x;
+    var yclick = oldPosition2._y + MENUBAR_HEIGHT;
+    canvas.simulate('drag', {clientX: xclick, clientY: yclick, dx: -100, dy: -100, shiftKey: true});
     newPosition1 = window.frames[0].paper.project.activeLayer.children[0].position;
     newPosition2 = window.frames[0].paper.project.activeLayer.children[1].position;
     newPosition3 = window.frames[0].paper.project.activeLayer.children[2].position;
@@ -305,9 +316,6 @@ describe("Move items", function() {
     if (newPosition3._x !== oldPosition3._x || newPosition3._y !== oldPosition3._y) {
       throw new Error("Path 3 moved when only 1 and 2 should have moved.");
     }
-    /*oldPosition1 = newPosition1;
-    oldPosition2 = newPosition2;
-    oldPosition3 = newPosition3;*/
     done();
   });
   

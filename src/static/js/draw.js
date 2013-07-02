@@ -303,8 +303,60 @@ function onMouseUp(event) {
 
 }
 
+var key_move_delta;
+var send_key_move_timer;
+var key_move_timer_is_active = false;
+function onKeyDown(event) {
+  if (activeTool == "select") {
+    var point = null;
+
+    if (event.key == "up") {
+      point = new paper.Point(0, -1);
+    } else if (event.key == "down") {
+      point = new paper.Point(0, 1);
+    } else if (event.key == "left") {
+      point = new paper.Point(-1, 0);
+    } else if (event.key == "right") {
+      point = new paper.Point(1, 0);
+    }
+
+	// Move objects 1 pixel with arrow keys
+    if (point) {
+      moveItemsBy1Pixel(point);
+    }
+
+    // Store delta
+    if (paper.project.selectedItems && point) {
+      if (!key_move_delta) {
+        key_move_delta = point;
+      } else {
+        key_move_delta += point;
+      }
+    }
+	
+    // Send move updates every 100 ms as batch updates
+    if (!key_move_timer_is_active && point) {
+      send_key_move_timer = setInterval(function() {
+        if (key_move_delta) {
+          var itemNames = new Array();
+          for (x in paper.project.selectedItems) {
+            var item = paper.project.selectedItems[x];
+            itemNames.push(item._name);
+          }
+          socket.emit('item:move:progress', room, uid, itemNames, key_move_delta);
+          key_move_delta = null;
+        }
+      }, 100);
+    }
+    key_move_timer_is_active = true;
+  }
+}
+
+
+
 function onKeyUp(event) {
   if (event.key == "delete") {
+    // Delete selected items
     var items = paper.project.selectedItems;
     if (items) {
       for (x in items) {
@@ -315,6 +367,48 @@ function onKeyUp(event) {
       }
     }
   }
+
+  if (activeTool == "select") {
+    // End arrow key movement timer
+    clearInterval(send_key_move_timer);
+    if (key_move_delta) {
+      // Send any remaining movement info
+      var itemNames = new Array();
+      for (x in paper.project.selectedItems) {
+        var item = paper.project.selectedItems[x];
+        itemNames.push(item._name);
+      }
+      socket.emit('item:move:end', room, uid, itemNames, key_move_delta);
+    } else {
+      // delta is null, so send 0 change
+      socket.emit('item:move:end', room, uid, itemNames, new Point(0, 0));
+    }
+    key_move_delta = null;
+    key_move_timer_is_active = false;
+  }
+}
+
+
+
+function moveItemsBy1Pixel(point) {
+  if (!point) {
+    return;
+  }
+
+  if (paper.project.selectedItems.length < 1) {
+    return;
+  }
+
+  // Move locally
+  var itemNames = new Array();
+  for (x in paper.project.selectedItems) {
+    var item = paper.project.selectedItems[x];
+    item.position += point;
+    itemNames.push(item._name);
+  }
+
+  // Redraw screen for item position update
+  view.draw();
 }
 
 // Drop image onto canvas to upload it

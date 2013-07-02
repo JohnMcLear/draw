@@ -391,12 +391,14 @@ progress_external_path = function (room, points, artist) {
     // Starts the path
     var start_point = new paper.Point(points.start[1], points.start[2]);
     var color = new paper.Color(points.rgba.red, points.rgba.green, points.rgba.blue, points.rgba.opacity);
-    if(points.tool == "draw"){
+    if(points.tool == "draw") {
       path.fillColor = color;
     } 
-    else if (points.tool == "pencil"){
+    else if (points.tool == "pencil") {
       path.strokeColor = color;
       path.strokeWidth = 2;
+    } else { // assume tool is not supplied, set to 'draw' as default
+      path.fillColor = color;
     }
     path.name = points.name;
     path.add(start_point);

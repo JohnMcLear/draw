@@ -660,16 +660,16 @@ table#otheruserstable {
   display: inline-block;
   vertical-align: middle;
 }
-.buttonicon-bold {
+.buttonicon-draw {
   background-image: url('../../static/img/brush.png');
 }
-.buttonicon-italic {
+.buttonicon-pencil {
   background-image: url('../../static/img/pencil.png');
 }
-.buttonicon-underline {
+.buttonicon-select {
   background-image: url('../../static/img/select.png');
 }
-.buttonicon-strikethrough {
+.buttonicon-upload {
   background-image: url('../../static/img/upload.png');
 }
 .buttonicon-insertorderedlist {

@@ -70,7 +70,7 @@ describe("Draw a path with a pencil", function(){
     for (var i=0; i<path._segments.length; i++) {
       var p1 = path._segments[i]._point;
       var p2 = path2._segments[i]._point;
-      if (p1._x != p2._x || p1._y != p2._y) {
+      if (Math.round(p1._x) != Math.round(p2._x) || Math.round(p1._y) != Math.round(p2._y)) {
         pathsEqual = false;
         throw new Error("Path segments differ.");
         break;

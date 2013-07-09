@@ -450,15 +450,6 @@ $color.on('click', function () {
 $('#pickerSwatch').on('click', function() {
   $('#myColorPicker').fadeToggle();
 });
-
-$("#opacityRange").on('click', function(e){
-  var offsetX = e.offsetX || e.originalEvent.layerX;
-  $("#opacityIdentifier").css({left:offsetX});
-  var opacity = $("#opacityRange").width() - e.offsetX + 55; // get the opacity range value by removing the offset from the width
-  $("#opacityRangeVal").val(opacity);
-  update_active_color();
-});
-
 $('#settingslink').on('click', function() {
   $('#settings').fadeToggle();
 });
@@ -647,7 +638,16 @@ socket.on('project:load', function (json) {
   console.log("project:load");
   paper.project.activeLayer.remove();
   paper.project.importJSON(json.project);
-  $('#mycolorpicker').pep({disableSelect:false, constrainToParent:"body"});
+
+  // Make color selector draggable
+  $('#mycolorpicker').pep({});
+  // Make sure the range event doesn't propogate to pep
+  $('#opacityRangeVal').on('touchstart MSPointerDown mousedown', function(ev){
+    ev.stopPropagation(); 
+  }).on('change', function(ev){
+    update_active_color();
+  })
+
   view.draw();
   $.get("../static/img/wheel.png");
 });

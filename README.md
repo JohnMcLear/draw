@@ -7,7 +7,7 @@ Fast, light weight, easy to maintain.  Try the [demo] (http://draw.etherpad.org)
 
 Demo
 ----
-[Etherdraw Demo site](http://draw.etherpad.org)
+[Etherdraw Demo site](http://draw.etherpad.org) hosted by [Joyent](http://joyent.com)
 
 Installation
 ------------
@@ -15,6 +15,7 @@ Installation
   2. Install EtherDraw `` git clone git://github.com/JohnMcLear/draw.git ``
   3. Enter the EtherDraw folder `` cd draw ``
   4. Run EtherDraw `` bin/run.sh `` 
+  5. Make a drawing!  Open your browser and visit `` http://127.0.0.1:3000 ``
 
 Screenshot
 ----------

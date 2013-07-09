@@ -11,7 +11,7 @@ describe("Draw a path", function(){
   });
   
   it("drawn path is added to paperjs project", function(done) {
-    this.timeout(1000);
+    this.timeout(5000);
 
     var chrome$ = helper.padChrome$;
     var paper = window.frames[0].paper;
@@ -19,16 +19,18 @@ describe("Draw a path", function(){
     // Mouse clicks and drags to create path
     var canvas = chrome$("#myCanvas");
     canvas.simulate('drag', {dx: 100, dy: 50});
-    var layer = paper.project.activeLayer;
 
-    var numChildren = layer.children.length;
-    expect(numChildren).to.be(1); // Expect only one child node to be on canvas
+    setTimeout(function() { // Give it a sec for xhr polling
+      var layer = paper.project.activeLayer;
+      var numChildren = layer.children.length;
+      expect(numChildren).to.be(1); // Expect only one child node to be on canvas
 
-    var numSegments = layer.children[0]._segments.length;
-    expect(numSegments).to.be(8); // Expect 8 segments for this path
-    oldPadName = padName;
-    path = window.frames[0].paper.project.activeLayer.children[0]; // Save path for later test
-    done();
+      var numSegments = layer.children[0]._segments.length;
+      expect(numSegments).to.be(8); // Expect 8 segments for this path
+      oldPadName = padName;
+      path = window.frames[0].paper.project.activeLayer.children[0]; // Save path for later test
+      done();
+    }, 500);
   });
   
   it("reloads same pad", function(done) {

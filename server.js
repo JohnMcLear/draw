@@ -2,13 +2,14 @@
  * Module dependencies.
  */
 
+var settings = require('./src/util/Settings.js')
 var express = require("express");
 var app = express();
 var paper = require('paper');
 paper.setup(new paper.Canvas(1920, 1080));
 var socket = require('socket.io');
 var ueberDB = require("ueberDB");
-var db = new ueberDB.database("dirty", {"filename" : "var/dirty.db"});
+var db = new ueberDB.database(settings.dbType, settings.dbSettings);
 var async = require('async');
 var fs = require('fs');
 
@@ -20,13 +21,13 @@ app.configure(function(){
  * A setting, just one
  */
 
-var port = 3000;
+var port = settings.port;
 
 
 
 
 
-/** Below be dragons 
+/** Below be dragons
  *
  */
 
@@ -97,11 +98,11 @@ app.get('/tests/frontend/specs/*', function (req, res) {
 
   fs.readFile(specFilePath, function(err, content){
     if(err){ return res.send(500); }
- 
+
     content = "describe(" + JSON.stringify(specFileName) + ", function(){   " + content + "   });";
 
     res.send(content);
-  }); 
+  });
 });
 
 // Used for front-end tests
@@ -189,12 +190,12 @@ io.sockets.on('connection', function (socket) {
     io.sockets.in(room).emit('draw:end', uid, co_ordinates);
     end_external_path(room, JSON.parse(co_ordinates), uid);
   });
-  
+
   // User joins a room
   socket.on('subscribe', function(data) {
     subscribe(socket, data);
   });
-  
+
   // User clears canvas
   socket.on('canvas:clear', function(room) {
     if (!projects[room] || !projects[room].project) {
@@ -204,27 +205,27 @@ io.sockets.on('connection', function (socket) {
     clearCanvas(room);
     io.sockets.in(room).emit('canvas:clear');
   });
-  
+
   // User removes an item
   socket.on('item:remove', function(room, uid, itemName) {
     removeItem(room, uid, itemName);
   });
-  
+
   // User moves one or more items on their canvas - progress
   socket.on('item:move:progress', function(room, uid, itemNames, delta) {
     moveItemsProgress(room, uid, itemNames, delta);
   });
-  
+
   // User moves one or more items on their canvas - end
   socket.on('item:move:end', function(room, uid, itemNames, delta) {
     moveItemsEnd(room, uid, itemNames, delta);
   });
-  
+
   // User adds a raster image
   socket.on('image:add', function(room, uid, data, position, name) {
     addImage(room, uid, data, position, name);
   });
-  
+
 });
 
 var projects = {};
@@ -236,7 +237,7 @@ function subscribe(socket, data) {
 
   // Subscribe the client to the room
   socket.join(room);
-  
+
   // If the close timer is set, cancel it
   if (closeTimer[room]) {
     clearTimeout(closeTimer[room]);
@@ -259,9 +260,9 @@ function subscribe(socket, data) {
   }
 
   // Broadcast to room the new user count
-  var active_connections = io.sockets.manager.rooms['/' + room].length;  
+  var active_connections = io.sockets.manager.rooms['/' + room].length;
   io.sockets.in(room).emit('user:connect', active_connections);
- 
+
 }
 
 // Try to load room from database
@@ -318,7 +319,7 @@ function disconnect(socket) {
       unsubscribe(socket, { room: room.replace('/','') });
     }
   }
-  
+
 }
 
 // Unsubscribe a client from a room
@@ -332,10 +333,10 @@ function unsubscribe(socket, data) {
 
   // Broadcast to room the new user count
   if (io.sockets.manager.rooms['/' + room]) {
-    var active_connections = io.sockets.manager.rooms['/' + room].length;  
+    var active_connections = io.sockets.manager.rooms['/' + room].length;
     io.sockets.in(room).emit('user:disconnect', active_connections);
   } else {
-  
+
     // Wait a few seconds before closing the project to finish pending writes to pad
     closeTimer[room] = setTimeout(function() {
       // Iff no one left in room, remove Paperjs instance
@@ -348,7 +349,7 @@ function unsubscribe(socket, data) {
       projects[room] = undefined;
     }, 5000);
   }
-  
+
 }
 
 function loadError(socket) {
@@ -361,7 +362,7 @@ var end_external_path = function (room, points, artist) {
   var project = projects[room].project;
   project.activate();
   var path = projects[room].external_paths[artist];
-  
+
   if (path) {
 
     // Close the path
@@ -395,7 +396,7 @@ progress_external_path = function (room, points, artist) {
     var color = new paper.Color(points.rgba.red, points.rgba.green, points.rgba.blue, points.rgba.opacity);
     if(points.tool == "draw") {
       path.fillColor = color;
-    } 
+    }
     else if (points.tool == "pencil") {
       path.strokeColor = color;
       path.strokeWidth = 2;

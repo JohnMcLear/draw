@@ -68,6 +68,9 @@ var active_color_json = {};
 var $opacity = $('#opacityRangeVal');
 var update_active_color = function () {
   var rgb_array = $('#activeColorSwatch').css('background-color');
+
+  if(rgb_array == undefined)rgb_array="rgba(0, 0, 0, 0)"; //default to white if there was an error
+
   $('#editbar').css("border-bottom", "solid 2px " + rgb_array);
 
   while(rgb_array.indexOf(" ") > -1) {
@@ -116,6 +119,7 @@ var mouseTimer = 0; // used for getting if the mouse is being held down but not 
 var mouseHeld; // global timer for if mouse is held.
 
 function onMouseDown(event) {
+    event.preventDefault();
   $('.popup').fadeOut();
 
   // Ignore middle or right mouse button clicks for now
@@ -176,7 +180,7 @@ var send_item_move_timer;
 var item_move_timer_is_active = false;
 
 function onMouseDrag(event) {
-
+ event.preventDefault();
   mouseTimer = 0;
   clearInterval(mouseHeld);
 

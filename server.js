@@ -2,13 +2,14 @@
  * Module dependencies.
  */
 
+var settings = require('./src/util/Settings.js')
 var express = require("express");
 var app = express();
 var paper = require('paper');
 paper.setup(new paper.Canvas(1920, 1080));
 var socket = require('socket.io');
 var ueberDB = require("ueberDB");
-var db = new ueberDB.database("dirty", {"filename" : "var/dirty.db"});
+var db = new ueberDB.database(settings.dbType, settings.dbSettings);
 var async = require('async');
 var fs = require('fs');
 
@@ -20,13 +21,13 @@ app.configure(function(){
  * A setting, just one
  */
 
-var port = 3000;
+var port = settings.port;
 
 
 
 
 
-/** Below be dragons 
+/** Below be dragons
  *
  */
 
@@ -76,8 +77,9 @@ app.get('/tests/frontend/specs_list.js', function(req, res){
 
 });
 
+// We don't use these right now - just cause extra error messages
 // Used for front-end tests
-var url2FilePath = function(url){
+/*var url2FilePath = function(url){
   var subPath = url.substr("/tests/frontend".length);
   if (subPath == ""){
     subPath = "index.html"
@@ -96,18 +98,18 @@ app.get('/tests/frontend/specs/*', function (req, res) {
 
   fs.readFile(specFilePath, function(err, content){
     if(err){ return res.send(500); }
- 
+
     content = "describe(" + JSON.stringify(specFileName) + ", function(){   " + content + "   });";
 
     res.send(content);
-  }); 
+  });
 });
 
 // Used for front-end tests
 app.get('/tests/frontend/*', function (req, res) {
   var filePath = url2FilePath(req.url);
   res.sendfile(filePath);
-});
+});*/
 
 // Used for front-end tests
 app.get('/tests/frontend', function (req, res) {
@@ -153,20 +155,16 @@ io.enable('browser client etag');          // apply etag caching logic based on 
 io.enable('browser client gzip');          // gzip the file
 io.set('log level', 1);                    // reduce logging
 
-// enable all transports (optional if you want flashsocket support, please note that some hosting
-// providers do not allow you to create servers that listen on a port different than 80 or their
-// default port)
+// Transports -- Note we dont include websocket here because Varnish sucks at handling it.
 io.set('transports', [
     'websocket'
-  , 'flashsocket'
-  , 'htmlfile'
   , 'xhr-polling'
   , 'jsonp-polling'
+  , 'htmlfile'
 ]);
 
 // SOCKET IO
 io.sockets.on('connection', function (socket) {
-
   socket.on('disconnect', function () {
     disconnect(socket);
   });
@@ -192,12 +190,12 @@ io.sockets.on('connection', function (socket) {
     io.sockets.in(room).emit('draw:end', uid, co_ordinates);
     end_external_path(room, JSON.parse(co_ordinates), uid);
   });
-  
+
   // User joins a room
   socket.on('subscribe', function(data) {
     subscribe(socket, data);
   });
-  
+
   // User clears canvas
   socket.on('canvas:clear', function(room) {
     if (!projects[room] || !projects[room].project) {
@@ -207,27 +205,27 @@ io.sockets.on('connection', function (socket) {
     clearCanvas(room);
     io.sockets.in(room).emit('canvas:clear');
   });
-  
+
   // User removes an item
   socket.on('item:remove', function(room, uid, itemName) {
     removeItem(room, uid, itemName);
   });
-  
+
   // User moves one or more items on their canvas - progress
   socket.on('item:move:progress', function(room, uid, itemNames, delta) {
     moveItemsProgress(room, uid, itemNames, delta);
   });
-  
+
   // User moves one or more items on their canvas - end
   socket.on('item:move:end', function(room, uid, itemNames, delta) {
     moveItemsEnd(room, uid, itemNames, delta);
   });
-  
+
   // User adds a raster image
   socket.on('image:add', function(room, uid, data, position, name) {
     addImage(room, uid, data, position, name);
   });
-  
+
 });
 
 var projects = {};
@@ -239,7 +237,7 @@ function subscribe(socket, data) {
 
   // Subscribe the client to the room
   socket.join(room);
-  
+
   // If the close timer is set, cancel it
   if (closeTimer[room]) {
     clearTimeout(closeTimer[room]);
@@ -262,14 +260,16 @@ function subscribe(socket, data) {
   }
 
   // Broadcast to room the new user count
-  var active_connections = io.sockets.manager.rooms['/' + room].length;  
+  var active_connections = io.sockets.manager.rooms['/' + room].length;
   io.sockets.in(room).emit('user:connect', active_connections);
- 
+
 }
 
 // Try to load room from database
 function loadFromDB(room, socket) {
+  // console.log("load from db");
   if (projects[room] && projects[room].project) {
+    // console.log("projects room and protjects room project");
     var project = projects[room].project;
     db.init(function (err) {
       if(err) {
@@ -287,6 +287,7 @@ function loadFromDB(room, socket) {
         socket.emit('loading:end');
         db.close(function(){});
       });
+      socket.emit('loading:end'); // used for sending back a blank database in case we try to load from DB but no project exists
     });
   } else {
     loadError(socket);
@@ -318,7 +319,7 @@ function disconnect(socket) {
       unsubscribe(socket, { room: room.replace('/','') });
     }
   }
-  
+
 }
 
 // Unsubscribe a client from a room
@@ -332,10 +333,10 @@ function unsubscribe(socket, data) {
 
   // Broadcast to room the new user count
   if (io.sockets.manager.rooms['/' + room]) {
-    var active_connections = io.sockets.manager.rooms['/' + room].length;  
+    var active_connections = io.sockets.manager.rooms['/' + room].length;
     io.sockets.in(room).emit('user:disconnect', active_connections);
   } else {
-  
+
     // Wait a few seconds before closing the project to finish pending writes to pad
     closeTimer[room] = setTimeout(function() {
       // Iff no one left in room, remove Paperjs instance
@@ -348,7 +349,7 @@ function unsubscribe(socket, data) {
       projects[room] = undefined;
     }, 5000);
   }
-  
+
 }
 
 function loadError(socket) {
@@ -361,7 +362,7 @@ var end_external_path = function (room, points, artist) {
   var project = projects[room].project;
   project.activate();
   var path = projects[room].external_paths[artist];
-  
+
   if (path) {
 
     // Close the path
@@ -380,7 +381,6 @@ var end_external_path = function (room, points, artist) {
 
 // Continues to draw a path in real time
 progress_external_path = function (room, points, artist) {
-
   var project = projects[room].project;
   project.activate();
   var path = projects[room].external_paths[artist];
@@ -388,19 +388,20 @@ progress_external_path = function (room, points, artist) {
   // The path hasn't already been started
   // So start it
   if (!path) {
-
     projects[room].external_paths[artist] = new paper.Path();
     path = projects[room].external_paths[artist];
 
     // Starts the path
     var start_point = new paper.Point(points.start[1], points.start[2]);
     var color = new paper.Color(points.rgba.red, points.rgba.green, points.rgba.blue, points.rgba.opacity);
-    if(points.tool == "draw"){
+    if(points.tool == "draw") {
       path.fillColor = color;
-    } 
-    else if (points.tool == "pencil"){
+    }
+    else if (points.tool == "pencil") {
       path.strokeColor = color;
       path.strokeWidth = 2;
+    } else { // assume tool is not supplied, set to 'draw' as default
+      path.fillColor = color;
     }
     path.name = points.name;
     path.add(start_point);

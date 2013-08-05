@@ -82,9 +82,8 @@ var update_active_color = function () {
 
   active_color_rgb = new RgbColor(red, green, blue, opacity);
   active_color_rgb._alpha = opacity;
-
   active_color_json = {
-    "red": red,
+    "red": red || 0,
     "green": green,
     "blue": blue,
     "opacity": opacity
@@ -303,8 +302,60 @@ function onMouseUp(event) {
 
 }
 
+var key_move_delta;
+var send_key_move_timer;
+var key_move_timer_is_active = false;
+function onKeyDown(event) {
+  if (activeTool == "select") {
+    var point = null;
+
+    if (event.key == "up") {
+      point = new paper.Point(0, -1);
+    } else if (event.key == "down") {
+      point = new paper.Point(0, 1);
+    } else if (event.key == "left") {
+      point = new paper.Point(-1, 0);
+    } else if (event.key == "right") {
+      point = new paper.Point(1, 0);
+    }
+
+	// Move objects 1 pixel with arrow keys
+    if (point) {
+      moveItemsBy1Pixel(point);
+    }
+
+    // Store delta
+    if (paper.project.selectedItems && point) {
+      if (!key_move_delta) {
+        key_move_delta = point;
+      } else {
+        key_move_delta += point;
+      }
+    }
+	
+    // Send move updates every 100 ms as batch updates
+    if (!key_move_timer_is_active && point) {
+      send_key_move_timer = setInterval(function() {
+        if (key_move_delta) {
+          var itemNames = new Array();
+          for (x in paper.project.selectedItems) {
+            var item = paper.project.selectedItems[x];
+            itemNames.push(item._name);
+          }
+          socket.emit('item:move:progress', room, uid, itemNames, key_move_delta);
+          key_move_delta = null;
+        }
+      }, 100);
+    }
+    key_move_timer_is_active = true;
+  }
+}
+
+
+
 function onKeyUp(event) {
   if (event.key == "delete") {
+    // Delete selected items
     var items = paper.project.selectedItems;
     if (items) {
       for (x in items) {
@@ -315,6 +366,48 @@ function onKeyUp(event) {
       }
     }
   }
+
+  if (activeTool == "select") {
+    // End arrow key movement timer
+    clearInterval(send_key_move_timer);
+    if (key_move_delta) {
+      // Send any remaining movement info
+      var itemNames = new Array();
+      for (x in paper.project.selectedItems) {
+        var item = paper.project.selectedItems[x];
+        itemNames.push(item._name);
+      }
+      socket.emit('item:move:end', room, uid, itemNames, key_move_delta);
+    } else {
+      // delta is null, so send 0 change
+      socket.emit('item:move:end', room, uid, itemNames, new Point(0, 0));
+    }
+    key_move_delta = null;
+    key_move_timer_is_active = false;
+  }
+}
+
+
+
+function moveItemsBy1Pixel(point) {
+  if (!point) {
+    return;
+  }
+
+  if (paper.project.selectedItems.length < 1) {
+    return;
+  }
+
+  // Move locally
+  var itemNames = new Array();
+  for (x in paper.project.selectedItems) {
+    var item = paper.project.selectedItems[x];
+    item.position += point;
+    itemNames.push(item._name);
+  }
+
+  // Redraw screen for item position update
+  view.draw();
 }
 
 // Drop image onto canvas to upload it
@@ -357,15 +450,6 @@ $color.on('click', function () {
 $('#pickerSwatch').on('click', function() {
   $('#myColorPicker').fadeToggle();
 });
-
-$("#opacityRange").on('click', function(e){
-  var offsetX = e.offsetX || e.originalEvent.layerX;
-  $("#opacityIdentifier").css({left:offsetX});
-  var opacity = $("#opacityRange").width() - e.offsetX + 55; // get the opacity range value by removing the offset from the width
-  $("#opacityRangeVal").val(opacity);
-  update_active_color();
-});
-
 $('#settingslink').on('click', function() {
   $('#settings').fadeToggle();
 });
@@ -542,6 +626,7 @@ socket.on('draw:end', function (artist, data) {
 });
 
 socket.on('user:connect', function (user_count) {
+  console.log("user:connect");
   update_user_count(user_count);
 });
 
@@ -550,12 +635,21 @@ socket.on('user:disconnect', function (user_count) {
 });
 
 socket.on('project:load', function (json) {
-  console.log(json.project);
+  console.log("project:load");
   paper.project.activeLayer.remove();
   paper.project.importJSON(json.project);
-  $('#colorpicker').farbtastic(pickColor); // make a color picker
-  $('#mycolorpicker').pep({disableSelect:false, constrainToParent:"body"});
+
+  // Make color selector draggable
+  $('#mycolorpicker').pep({});
+  // Make sure the range event doesn't propogate to pep
+  $('#opacityRangeVal').on('touchstart MSPointerDown mousedown', function(ev){
+    ev.stopPropagation(); 
+  }).on('change', function(ev){
+    update_active_color();
+  })
+
   view.draw();
+  $.get("../static/img/wheel.png");
 });
 
 socket.on('project:load:error', function() {
@@ -567,11 +661,13 @@ socket.on('canvas:clear', function() {
 });
 
 socket.on('loading:start', function() {
+  // console.log("loading:start");
   $('#loading').show();
 });
 
 socket.on('loading:end', function() {
   $('#loading').hide();
+  $('#colorpicker').farbtastic(pickColor); // make a color picker
 });
 
 socket.on('item:remove', function(artist, name) {

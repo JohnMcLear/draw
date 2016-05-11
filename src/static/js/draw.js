@@ -19,7 +19,7 @@ function pickColor(color) {
  */
 function positionPickerInCanvas(cursor) {
   var picker = $('#mycolorpicker');
-  
+
   // Determine best place for color picker so it isn't off the screen
   var pickerSize = new Point(picker.width(), picker.height());
   var windowSize = new Point($(window).width(), $(window).height());
@@ -37,12 +37,12 @@ function positionPickerInCanvas(cursor) {
   } else if (brSpace.x > pickerSize.x) {
     newPos.x = cursor.x + spacer.x;
   }
-  
+
   // Get the canvasContainer's position so we can make sure the picker
   // doesn't go outside of the canvasContainer (to keep it pretty)
   var minY = 10;
   // Buffer so we don't get too close to the bottom cause scroll bars
-  var bBuffer = Math.max(50, (windowSize.y - ($('#canvasContainer').position().top 
+  var bBuffer = Math.max(50, (windowSize.y - ($('#canvasContainer').position().top
       + $('#canvasContainer').height())) + 70);
 
   // Favour having the picker in the middle of the cursor
@@ -53,7 +53,7 @@ function positionPickerInCanvas(cursor) {
   } else if (brSpace.y < ((pickerSize.y / 2) + bBuffer) && tlSpace.y > (brSpace.y - (pickerSize.y + bBuffer))) {
     newPos.y = windowSize.y - (pickerSize.y + bBuffer);
   }
-  
+
   $('#mycolorpicker').css({
     "left": newPos.x,
     "top": newPos.y
@@ -684,7 +684,7 @@ $('#toggleBackground').click(function() {
   $('#myCanvas').toggleClass('whiteBG');
 });
 
-// --------------------------------- 
+// ---------------------------------
 // DRAWING EVENTS
 
 
@@ -1188,7 +1188,7 @@ $('#myCanvas').bind('dblclick', function(e) {
 
 //@todo Find why view has no on function view.on('resize', updateCoordinates);
 
-// --------------------------------- 
+// ---------------------------------
 // CONTROLS EVENTS
 
 var $color = $('.colorSwatch:not(#pickerSwatch)');
@@ -1392,7 +1392,7 @@ function uploadImage(file) {
 
 
 
-// --------------------------------- 
+// ---------------------------------
 // SOCKET.IO EVENTS
 socket.on('settings', function(settings) {
   processSettings(settings);
@@ -1503,13 +1503,27 @@ socket.on('image:add', function(artist, data, position, name) {
   }
 });
 
+
 // --------------------------------- 
+
+socket.on('chat:message', function(uid, message, name) {
+  $('#chatMessages').append($('<li>').text(name + ": " + message));
+  if(30 > Math.abs( ($("#chatMessages")[0].scrollTop+ $("#chatMessages").height()) - $("#chatMessages")[0].scrollHeight )) {
+  //if the user is scrolled near the bottom, pull their scroll down with new text
+    $("#chatMessages").scrollTop($("#chatMessages")[0].scrollHeight);
+  }
+});
+
+
+console.log(view);
+
+// ---------------------------------
 // SOCKET.IO EVENT FUNCTIONS
 
 // Updates the active connections
 var $user_count = $('#online_count');
 
-function update_user_count(count) {  
+function update_user_count(count) {
   $user_count.text((count === 1) ? "1" : " " + count);
 }
 
@@ -1591,6 +1605,39 @@ function processSettings(settings) {
 
 }
 
+function chatToggleShow() {
+  //If it's currently big, make it small, vice versa
+  //If the user does not have a name, ask for one
+  
+  if($("#chatBox").height() > 10){
+    $("#chatBox").animate({height : 10},200);
+    $("#chatMessages").hide();
+    $("#chatInput").hide();
+  } else {
+    if(chatName == ""){
+      chatName = prompt("What is your name?", "");
+    }
+    $("#chatBox").animate({height : 200},200);
+    $("#chatMessages").show();
+    $("#chatInput").show();
+  }
+  
+}
+    
+function sendChatMessage() {
+    //get the text, emit it, clear the text
+    var message = $('#chatInput').val();
+    socket.emit('chat:message', room, uid, message, chatName || "unnamed");
+    $('#chatInput').val('');
+    return(false);//prevents page reload on submit
+}
+  //does chatName belong here?
+  var chatName = "";
+  chatToggleShow();
+  $("#chatLabel").click(function() {chatToggleShow();} );
+  $('form').submit(sendChatMessage);
+
+  
 // Periodically save drawing
 setInterval(function(){
   saveDrawing();

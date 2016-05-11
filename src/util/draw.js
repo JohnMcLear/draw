@@ -154,3 +154,15 @@ exports.addImage = function(room, artist, data, position, name) {
     db.storeProject(room);
   }
 }
+
+exports.chatMessage = function(room, uid, message, name){
+    var project = projects[room].project;
+    if (project && project.activeLayer) {
+        project.messages = project.message || [];
+        project.messages.push({
+          "name": name,
+          "message": message
+        });
+        db.storeProject(room);
+    }
+};

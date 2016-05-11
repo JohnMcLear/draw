@@ -176,7 +176,13 @@ io.sockets.on('connection', function (socket) {
     draw.addImage(room, uid, data, position, name);
     io.sockets.in(room).emit('image:add', uid, data, position, name);
   });
-
+  
+  //User sends a chat message
+  socket.on('chat:message', function(room, uid, message, name){
+      draw.chatMessage(room, uid, message, name);
+      io.sockets.in(room).emit('chat:message', uid, message, name);
+  });
+  
 });
 
 // Subscribe a client to a room

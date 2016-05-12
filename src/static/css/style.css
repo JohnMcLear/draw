@@ -238,6 +238,18 @@ body {
 .buttonicon-select {
   background-image: url('../../static/img/select.png');
 }
+.buttonicon-text {
+  background-image: url('../../static/img/text.png');
+}
+.buttonicon-zero {
+  background-image: url('../../static/img/zero.png');
+}
+.buttonicon-scale {
+  background-image: url('../../static/img/scale.png');
+}
+.buttonicon-fit {
+  background-image: url('../../static/img/fit.png');
+}
 .buttonicon-upload {
   background-image: url('../../static/img/upload.png');
 }
@@ -333,6 +345,18 @@ input[type=checkbox] {
   background-position: 0px 37px;
 }
 
+#canvasPosition {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  padding: 5px;
+  color: #333;
+  background-color: rgba(255, 255, 255, 0.4);
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  z-index: 1;
+}
+
 @media screen and (max-width: 600px) { 
     .toolbar ul li.separator {
       display: none;
@@ -371,6 +395,9 @@ input[type=checkbox] {
     }
     #canvasContainer {
       bottom: 32px;
+    }
+    #canvasPosition {
+      bottom: 42px;
     }
     .toolbar ul.menu_right {
       background: #f7f7f7;
@@ -472,3 +499,9 @@ input[type=checkbox] {
   background-color:#fff;
 }
 
+.textEditor {
+  position: absolute;
+  z-index: 1;
+  min-width: 20px;
+  background-color: rgba(255, 255, 255, 0.8);
+}

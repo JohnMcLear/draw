@@ -11,10 +11,11 @@ fi
 #Stop the script if its started as root
 if [ "$(id -u)" -eq 0 ]; then
    echo "You shouldn't start EtherDraw as root!"
-   echo "Please type 'EtherDraw rocks my socks' if you still want to start it as root"
+   keyword="EtherDraw rocks my socks"
+   echo "Please type '$keyword' if you still want to start it as root"
    read rocks
-   if [ ! $rocks = "EtherDraw rocks my socks" ]
-   then
+
+   if [ "$rocks" != "$keyword" ]; then
      echo "Your input was incorrect"
      exit 1
    fi

@@ -9,24 +9,24 @@
 	  |@licstart  The following is the entire license notice for the
 	  JavaScript code in this page.|
 
-	  Copyright 2011 Peter Martischka, Primary Technology.
+          Copyright 2011 Peter Martischka, Primary Technology.
 
-	  Licensed under the Apache License, Version 2.0 (the "License");
-	  you may not use this file except in compliance with the License.
-	  You may obtain a copy of the License at
+          Licensed under the Apache License, Version 2.0 (the "License");
+          you may not use this file except in compliance with the License.
+          You may obtain a copy of the License at
 
-	     http://www.apache.org/licenses/LICENSE-2.0
+             http://www.apache.org/licenses/LICENSE-2.0
 
-	  Unless required by applicable law or agreed to in writing, software
-	  distributed under the License is distributed on an "AS IS" BASIS,
-	  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	  See the License for the specific language governing permissions and
-	  limitations under the License.
+          Unless required by applicable law or agreed to in writing, software
+          distributed under the License is distributed on an "AS IS" BASIS,
+          WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+          See the License for the specific language governing permissions and
+          limitations under the License.
 
-	  |@licend  The above is the entire license notice
-	  for the JavaScript code in this page.|
-	  */
-	</script>
+          |@licend  The above is the entire license notice
+          for the JavaScript code in this page.|
+          */
+        </script>
         <meta charset="utf-8"> 
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
         <link rel="shortcut icon" href="../static/img/favicon.ico">
@@ -54,16 +54,23 @@
                       <span class="buttonicon buttonicon-draw"></span>
                     </a>
                 </li>
-		<!-- pencil brush -->
+                <!-- pencil brush -->
                 <li class="acl-write" id="pencilTool" data-key="pencil">
                     <a class="grouped-middle" data-l10n-id="draw.toolbar.pencil.title">
                       <span class="buttonicon buttonicon-pencil"></span>
                     </a>
                 </li>
-		<!-- Select Tool -->
+                <!-- Select Tool -->
                 <li class="acl-write" id="selectTool" data-key="select">
                     <a class="grouped-middle" data-l10n-id="draw.toolbar.select.title">
                       <span class="buttonicon buttonicon-select"></span>
+                    </a>
+                </li>
+    
+                <!-- Goto to start of canvas -->
+                <li class="acl-write" id="textTool" data-key="text">
+                    <a class="grouped-middle" data-l10n-id="draw.toolbar.text.title" title="Insert textbox">
+                      <span class="buttonicon buttonicon-text"></span>
                     </a>
                 </li>
 
@@ -86,11 +93,32 @@
 
                 <li class="acl-write" id="toggleBackground" data-key="clear">
                   <a class="grouped-left" data-l10n-id="draw.toolbar.toggleBackground" class="toggleBackground" title="Toggle Transparent Background">
-                    <span class="buttonicon buttonicon-toggleBackground" style="background-color:#fff;background-image:none;border:solid 1px black;margin:0;height:14px">
+                    <span class="buttonicon buttonicon-toggleBackground" style="background-color:#fff;background-image:none;border:solid 1px black;margin:0;height:14px"></span>
                   </a>
                 </li>
+    
+                <!-- Goto to start of canvas -->
+                <li class="acl-write" id="zeroTool" data-key="zero">
+                    <a class="grouped-middle" data-l10n-id="draw.toolbar.zero.title" title="Reset Canvas Panning to 0,0">
+                      <span class="buttonicon buttonicon-zero"></span>
+                    </a>
+                </li>
+    
+                <!-- Reset scaling -->
+                <li class="acl-write" id="scaleTool" data-key="scale">
+                    <a class="grouped-middle" data-l10n-id="draw.toolbar.scale.title" title="Reset Canvas Scaling to 1:1">
+                      <span class="buttonicon buttonicon-scale"></span>
+                    </a>
+                </li>
+    
+                <!-- Zoom to fit -->
+                <li class="acl-write" id="fitTool" data-key="fit">
+                    <a class="grouped-middle" data-l10n-id="draw.toolbar.fit.title" title="Zoom to fit contents">
+                      <span class="buttonicon buttonicon-fit"></span>
+                    </a>
+                </li>
 
-		<!-- Upload -->
+                <!-- Upload -->
                 <li class="acl-write" id="uploadImage" data-key="upload">
                     <a class="grouped-right" data-l10n-id="draw.toolbar.upload.title" title="Upload an Image">
                       <span class="buttonicon buttonicon-upload"></span>
@@ -111,14 +139,14 @@
                         <span class="buttonicon buttonicon-import_export"></span>
                     </a>
                 </li>
-		<!-- share & embed -->
+               <!-- share & embed -->
                 <li data-key="embed">
                     <a id="embedlink" class="grouped-right" data-l10n-id="draw.toolbar.embed.title">
                         <span class="buttonicon buttonicon-embed"></span>
                     </a>
                 </li>
 
-		<!-- user stuff -->
+                <!-- user stuff -->
                 <li class="separator"></li>
                 <li id="usericon" data-key="showusers">
                     <a data-l10n-id="draw.toolbar.showusers.title">
@@ -129,16 +157,18 @@
                 
             </ul>
         </div>
-   
+         <div id="canvasPosition">
+          <span id="coordinates">0,0</span> (<span id="zoom">1</span>x)
+        </div>
 
         <div id="settings" class="popup">
             <h1 data-l10n-id="draw.settings.padSettings"></h1>
             <div class="column">
                 <h2 data-l10n-id="draw.settings.ClearCanvas">Clear Canvas</h2>
-		<a>Warning - This will clear the canvas</a><button id="clearCanvas">Okay, Clear it!</button>
-	    </div>
+    <a>Warning - This will clear the canvas</a><button id="clearCanvas">Okay, Clear it!</button>
+      </div>
         </div>
-	<div id="embed" class="popup">
+        <div id="embed" class="popup">
             <h1 data-l10n-id="draw.share">Share & Embed</h1>
             <div id="linkcode">
                 <h2 data-l10n-id="draw.share.link">Share</h2>
@@ -158,7 +188,7 @@
                 <h2 data-l10n-id="draw.settings.myView"></h2>
             </div>
         </div>
-	<div id="importexport" class="popup">
+        <div id="importexport" class="popup">
             <h1 data-l10n-id="draw.importExport.import_export">Export</h1>
             <div class="column">
                 <h2 data-l10n-id="draw.importExport.export"></h2>
@@ -167,28 +197,26 @@
             </div>
         </div>
 
-
-
-    <div id="lostConnection" class="hidden">
-        <p>Lost connection to the server! Please refresh this page.</p>
-    </div>
-    <div id="loading" class="hidden" style="display:block;">
-        <p>Loading existing sketch...  Click and hold to access the colour wheel</p>
-    </div>
-
-    <input type="file" id="imageInput" accept="image/*" />
-    <div id="activeColorSwatch"></div>
-    <div id="canvasContainer">
-      <canvas id="myCanvas" resize="true"></canvas>
-      <div id="mycolorpicker">
-        <div id="colorpickerMover"></div>
-        <div id="colorpicker"></div>
-        <div id="opacity">
-          <div id="opacityLabel">Opacity</div>
-          <input type="range" min="0" max="255" value="200" id="opacityRangeVal">
+        <div id="lostConnection" class="hidden">
+            <p>Lost connection to the server! Please refresh this page.</p>
         </div>
-      </div>
+        <div id="loading" class="hidden" style="display:block;">
+            <p>Loading existing sketch...  Click and hold to access the colour wheel</p>
+        </div>
 
-    </div>
+        <input type="file" id="imageInput" accept="image/*" />
+        <div id="activeColorSwatch"></div>
+        <div id="canvasContainer">
+          <canvas id="myCanvas" resize="true"></canvas>
+          <div id="mycolorpicker">
+            <div id="colorpickerMover"></div>
+            <div id="colorpicker"></div>
+            <div id="opacity">
+              <div id="opacityLabel">Opacity</div>
+              <input type="range" min="0" max="255" value="200" id="opacityRangeVal">
+            </div>
+          </div>
+
+        </div>
     </body>
 </html>

@@ -1,18 +1,18 @@
  /*!
- * jQuery Simulate v0.0.1 - simulate browser mouse and keyboard events
+ * jQuery Simulate v1.0.1 - simulate browser mouse and keyboard events
  * https://github.com/jquery/jquery-simulate
  *
- * Copyright 2012 jQuery Foundation and other contributors
+ * Copyright jQuery Foundation and other contributors
  * Released under the MIT license.
  * http://jquery.org/license
  *
- * Date: Sun Dec 9 12:15:33 2012 -0500
+ * Date: Thu Feb 12 17:39:14 2015 +0100
  */
 
 ;(function( $, undefined ) {
 
 var rkeyEvent = /^key/,
-	rmouseEvent = /^(?:mouse|contextmenu)|click/;
+	rmouseEvent = /^(?:mouse|contextmenu)|click|wheel/;
 
 $.fn.simulate = function( type, options ) {
 	return this.each(function() {
@@ -103,37 +103,27 @@ $.extend( $.simulate.prototype, {
 			relatedTarget: undefined
 		}, options );
 
-		if ( document.createEvent ) {
+		if (type === "wheel") {
+			options = $.extend({
+				deltaX: 0,
+				deltaY: 0,
+				deltaMode: 0
+			}, options);
+		}
+
+		if (MouseEvent) {
+			if (type === "wheel") {
+				event = new WheelEvent(type, options);
+			} else {
+				event = new MouseEvent(type, options);
+			}
+		} else if ( document.createEvent ) {
 			event = document.createEvent( "MouseEvents" );
 			event.initMouseEvent( type, options.bubbles, options.cancelable,
 				options.view, options.detail,
 				options.screenX, options.screenY, options.clientX, options.clientY,
 				options.ctrlKey, options.altKey, options.shiftKey, options.metaKey,
 				options.button, options.relatedTarget || document.body.parentNode );
-
-			// IE 9+ creates events with pageX and pageY set to 0.
-			// Trying to modify the properties throws an error,
-			// so we define getters to return the correct values.
-			if ( event.pageX === 0 && event.pageY === 0 && Object.defineProperty ) {
-				eventDoc = event.relatedTarget.ownerDocument || document;
-				doc = eventDoc.documentElement;
-				body = eventDoc.body;
-
-				Object.defineProperty( event, "pageX", {
-					get: function() {
-						return options.clientX +
-							( doc && doc.scrollLeft || body && body.scrollLeft || 0 ) -
-							( doc && doc.clientLeft || body && body.clientLeft || 0 );
-					}
-				});
-				Object.defineProperty( event, "pageY", {
-					get: function() {
-						return options.clientY +
-							( doc && doc.scrollTop || body && body.scrollTop || 0 ) -
-							( doc && doc.clientTop || body && body.clientTop || 0 );
-					}
-				});
-			}
 		} else if ( document.createEventObject ) {
 			event = document.createEventObject();
 			$.extend( event, options );
@@ -144,7 +134,31 @@ $.extend( $.simulate.prototype, {
 				0: 1,
 				1: 4,
 				2: 2
-			}[ event.button ] || event.button;
+			}[ event.button ] || ( event.button === -1 ? 0 : event.button );
+		}
+
+		// IE 9+ creates events with pageX and pageY set to 0.
+		// Trying to modify the properties throws an error,
+		// so we define getters to return the correct values.
+		if ( event.pageX === 0 && event.pageY === 0 && Object.defineProperty ) {
+			eventDoc = event.relatedTarget.ownerDocument || document;
+			doc = eventDoc.documentElement;
+			body = eventDoc.body;
+
+			Object.defineProperty( event, "pageX", {
+				get: function() {
+					return options.clientX +
+						( doc && doc.scrollLeft || body && body.scrollLeft || 0 ) -
+						( doc && doc.clientLeft || body && body.clientLeft || 0 );
+				}
+			});
+			Object.defineProperty( event, "pageY", {
+				get: function() {
+					return options.clientY +
+						( doc && doc.scrollTop || body && body.scrollTop || 0 ) -
+						( doc && doc.clientTop || body && body.clientTop || 0 );
+				}
+			});
 		}
 
 		return event;
@@ -201,7 +215,9 @@ $.extend( $.simulate.prototype, {
 	},
 
 	dispatchEvent: function( elem, type, event ) {
-		if ( elem.dispatchEvent ) {
+		if ( elem[ type ] ) {
+			elem[ type ]();
+		} else if ( elem.dispatchEvent ) {
 			elem.dispatchEvent( event );
 		} else if ( elem.fireEvent ) {
 			elem.fireEvent( "on" + type, event );
@@ -293,39 +309,36 @@ $.extend( $.simulate.prototype, {
 	simulateDrag: function() {
 		var i = 0,
 			target = this.target,
+			eventDoc = target.ownerDocument,
 			options = this.options,
 			center = options.handle === "corner" ? findCorner( target ) : findCenter( target ),
-			/* Modified by tranek http://www.github.com/tranek */
-			x = options.clientX || Math.floor( center.x ),
-			y = options.clientY || Math.floor( center.y ),
-			coord = { clientX: x, clientY: y },
+			x = Math.floor( center.x ),
+			y = Math.floor( center.y ),
+			eventOptions = $.extend(options.eventOptions, {
+				clientX: x,
+				clientY: y
+			}),
 			dx = options.dx || ( options.x !== undefined ? options.x - x : 0 ),
 			dy = options.dy || ( options.y !== undefined ? options.y - y : 0 ),
 			moves = options.moves || 3;
-		
-		if (options.shiftKey !== undefined) {
-			coord.shiftKey = options.shiftKey;
-		}
 
-		this.simulateEvent( target, "mousedown", coord );
+		this.simulateEvent( target, "mousedown", eventOptions );
 
 		for ( ; i < moves ; i++ ) {
 			x += dx / moves;
 			y += dy / moves;
 
-			coord = {
-				clientX: Math.round( x ),
-				clientY: Math.round( y )
-			};
+			eventOptions.clientX = Math.round( x );
+			eventOptions.clientY = Math.round( y );
 
-			this.simulateEvent( document, "mousemove", coord );
+			this.simulateEvent( eventDoc, "mousemove", eventOptions );
 		}
 
-		if ( $.contains( document, target ) ) {
-			this.simulateEvent( target, "mouseup", coord );
-			this.simulateEvent( target, "click", coord );
+		if ( $.contains( eventDoc, target ) ) {
+			this.simulateEvent( target, "mouseup", eventOptions );
+			this.simulateEvent( target, "click", eventOptions );
 		} else {
-			this.simulateEvent( document, "mouseup", coord );
+			this.simulateEvent( eventDoc, "mouseup", eventOptions );
 		}
 	}
 });

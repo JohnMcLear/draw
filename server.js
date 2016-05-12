@@ -28,7 +28,7 @@ if(settings.ssl){
     cert: fs.readFileSync(settings.ssl.cert)
   };
   var app = express(options);
-  var server = https.createServer(options, app).listen(settings.ip, settings.port);
+  var server = https.createServer(options, app).listen(settings.port, settings.ip);
 }else{
   var app = express();
   var server = app.listen(settings.port);
@@ -89,9 +89,6 @@ app.get('/tests/frontend', function (req, res) {
 // Static files IE Javascript and CSS
 app.use("/static", express.static(__dirname + '/src/static'));
 
-
-
-
 // LISTEN FOR REQUESTS
 var io = socket.listen(server);
 io.sockets.setMaxListeners(0);
@@ -125,6 +122,16 @@ io.sockets.on('connection', function (socket) {
     }
     io.in(room).emit('draw:end', uid, co_ordinates);
     draw.endExternalPath(room, JSON.parse(co_ordinates), uid);
+  });
+
+  // EVENT: User draws a textbox
+  socket.on('draw:textbox', function (room, uid, textbox) {
+    if (!projects.projects[room] || !projects.projects[room].project) {
+      loadError(socket);
+      return;
+    }
+    io.in(room).emit('draw:textbox', uid, textbox);
+    draw.addTextbox(room, JSON.parse(textbox));
   });
 
   // User joins a room
